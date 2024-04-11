@@ -1,0 +1,15 @@
+[package]
+name = "server_net"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.82"
+futures-rustls = "0.26.0"
+rustls = "0.23.4"
+rustls-pemfile = "2.1.2"
+
+[dev-dependencies]
+tokio = { version = "1.37.0", features = ["full"] }
