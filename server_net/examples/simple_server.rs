@@ -11,7 +11,7 @@ use rustls::crypto::{aws_lc_rs as provider, CryptoProvider};
 use std::env;
 use std::error::Error as StdError;
 use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::BufReader;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;

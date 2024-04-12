@@ -11,6 +11,7 @@ pub struct FromTokio<T: ?Sized> {
     inner: T,
 }
 
+#[allow(dead_code)]
 impl<T> FromTokio<T> {
     /// Create a new adapter.
     pub fn new(inner: T) -> Self {
@@ -23,6 +24,7 @@ impl<T> FromTokio<T> {
     }
 }
 
+#[allow(dead_code)]
 impl<T: ?Sized> FromTokio<T> {
     /// Borrow the inner object.
     pub fn inner(&self) -> &T {
