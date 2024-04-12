@@ -1,0 +1,30 @@
+[package]
+name = "basic_example"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+# This makes the compiled code faster and smaller, but it makes compiling slower,
+# so it's only enabled in release mode.
+lto = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+embedded-graphics = "0.8.1"
+embedded-graphics-web-simulator = "0.4.0"
+embedded-text = "0.7.0"
+tinybmp = "0.5.0"
+wasm-bindgen = "0.2.92"
+web-sys = { version = "0.3.69", features = [
+    "console",
+    "CanvasRenderingContext2d",
+    "Document",
+    "Element",
+    "HtmlCanvasElement",
+    "Window",
+] }
