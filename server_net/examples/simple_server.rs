@@ -8,9 +8,12 @@ use std::io::BufReader;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let mut args = env::args();
     args.next();
     let ca_file = args
@@ -23,6 +26,7 @@ async fn main() -> Result<()> {
         .next()
         .ok_or_else(|| anyhow::anyhow!("missing private key file argument"))?;
 
+    info!("Loading CA file: {:?}", ca_file);
     let roots = {
         let mut filebuf = BufReader::new(File::open(ca_file)?);
         let root_ca = rustls_pemfile::certs(&mut filebuf);
@@ -35,8 +39,10 @@ async fn main() -> Result<()> {
         roots
     };
 
+    info!("Loading cert file: {:?}", cert_file);
     let certs = rustls_pemfile::certs(&mut BufReader::new(&mut File::open(cert_file)?))
         .collect::<Result<Vec<_>, _>>()?;
+    info!("Loading private key file: {:?}", private_key_file);
     let private_key =
         rustls_pemfile::private_key(&mut BufReader::new(&mut File::open(&private_key_file)?))?
             .ok_or_else(|| {
@@ -46,6 +52,7 @@ async fn main() -> Result<()> {
                 )
             })?;
 
+    info!("Building client verifier");
     let client_verifier = WebPkiClientVerifier::builder(roots.into()).build().unwrap();
 
     let config = rustls::ServerConfig::builder_with_provider(
