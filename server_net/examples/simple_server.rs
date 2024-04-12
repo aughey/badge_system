@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
             })?;
 
     info!("Building client verifier");
-    let client_verifier = WebPkiClientVerifier::builder(roots.into()).build().unwrap();
+    let client_verifier = WebPkiClientVerifier::builder(roots.into()).build()?;
 
     let config = rustls::ServerConfig::builder_with_provider(
         CryptoProvider {
@@ -73,41 +73,56 @@ async fn main() -> Result<()> {
 
     let listener = TcpListener::bind(format!("[::]:{}", 4443)).await?;
     let acceptor = tokio_rustls::TlsAcceptor::from(Arc::new(config));
-    let (stream, _) = listener.accept().await?;
-    // turn stream into an async stream
-    let mut stream = acceptor.accept(stream).await?;
-
-    stream.write("From server".as_bytes()).await?;
-
-    // // Get past the handshake
-    // while conn.is_handshaking() {
-    //     conn.complete_io(&mut stream)?;
-    // }
-    // println!("alpn protocol: {:?}", conn.alpn_protocol());
-    // println!("cipher suite: {:?}", conn.negotiated_cipher_suite());
-    // println!("protocol version: {:?}", conn.protocol_version());
 
     loop {
-        let mut buf = [0u8; 1024];
+        info!("Waiting for incoming connection");
+        let (stream, _) = listener.accept().await?;
+        info!("Got incoming connection");
 
-        match stream.read(&mut buf).await {
-            Ok(0) => break,
-            Ok(len) => {
-                let buf = std::str::from_utf8(&buf[..len]).map_err(|e| {
-                    anyhow::anyhow!("Could not convert buf into utf8 string: {e:?}")
-                })?;
-                println!("read {} bytes: {}", len, buf);
-                break;
-            }
+        // turn stream into an async stream
+        let mut stream = match acceptor.accept(stream).await {
+            Ok(stream) => stream,
             Err(e) => {
-                eprintln!("read error: {:?}", e);
-                break;
+                eprintln!("accept error: {:?}", e);
+                continue;
+            }
+        };
+
+        info!("Writing to stream");
+        stream.write("From server".as_bytes()).await?;
+
+        // // Get past the handshake
+        // while conn.is_handshaking() {
+        //     conn.complete_io(&mut stream)?;
+        // }
+        // println!("alpn protocol: {:?}", conn.alpn_protocol());
+        // println!("cipher suite: {:?}", conn.negotiated_cipher_suite());
+        // println!("protocol version: {:?}", conn.protocol_version());
+
+        info!("Reading from stream");
+        loop {
+            let mut buf = [0u8; 1024];
+
+            match stream.read(&mut buf).await {
+                Ok(0) => break,
+                Ok(len) => {
+                    let buf = std::str::from_utf8(&buf[..len]).map_err(|e| {
+                        anyhow::anyhow!("Could not convert buf into utf8 string: {e:?}")
+                    })?;
+                    println!("read {} bytes: {}", len, buf);
+                    break;
+                }
+                Err(e) => {
+                    eprintln!("read error: {:?}", e);
+                    break;
+                }
             }
         }
+        // println!("alpn protocol: {:?}", stream.conn.alpn_protocol());
+        // println!("cipher suite: {:?}", stream.conn.negotiated_cipher_suite());
+        // println!("protocol version: {:?}", stream.conn.protocol_version());
     }
-    // println!("alpn protocol: {:?}", stream.conn.alpn_protocol());
-    // println!("cipher suite: {:?}", stream.conn.negotiated_cipher_suite());
-    // println!("protocol version: {:?}", stream.conn.protocol_version());
 
+    #[allow(unreachable_code)]
     Ok(())
 }

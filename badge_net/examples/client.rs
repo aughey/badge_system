@@ -1,5 +1,5 @@
 use anyhow::Result;
-use embedded_tls::{TlsConfig, TlsConnection, TlsContext};
+use embedded_tls::{Certificate, TlsConfig, TlsConnection, TlsContext};
 use rand::rngs::OsRng;
 mod from_tokio;
 
@@ -9,7 +9,20 @@ use tokio::net::TcpStream;
 async fn main() -> Result<()> {
     let client = TcpStream::connect("127.0.0.1:4443").await?;
 
-    let config = TlsConfig::new().enable_rsa_signatures();
+    let ca = include_str!("../../CA_cert.crt");
+    let ca = pem_parser::pem_to_der(ca);
+
+    let cert = include_str!("../../client.crt");
+    let cert = pem_parser::pem_to_der(cert);
+
+    let key = include_str!("../../client.key");
+    let key = pem_parser::pem_to_der(key);
+
+    let config = TlsConfig::new()
+        .enable_rsa_signatures()
+        .with_ca(Certificate::X509(&ca))
+        .with_priv_key(&key)
+        .with_cert(Certificate::X509(&cert));
     let mut read_record_buffer = [0u8; 16384];
     let mut write_record_buffer = [0u8; 16384];
     let mut tls = TlsConnection::new(
