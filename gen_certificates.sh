@@ -21,10 +21,8 @@ openssl req -new -key server.key -out server.csr -subj "/C=US/ST=CA/L=San Franci
 # Sign the cerver CSR with the CA
 openssl x509 -passin pass:$CA_PASS -req -in server.csr -CA CA_cert.crt -CAkey CA_private.key -CAcreateserial -out server.crt -days 500 -sha256
 
-# Generate a client key
-#openssl ecparam -out "client.key" 4096
+# Generate a client key (embedded_tls needs ec key)
 openssl ecparam -genkey -name prime256v1 -noout -out client.key
-
 
 # Create a CSR (Certificate Signing Request) for a pki cert
 echo "Creating a CSR for the clien"
