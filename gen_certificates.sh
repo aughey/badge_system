@@ -25,7 +25,7 @@ openssl x509 -passin pass:$CA_PASS -req -in server.csr -CA CA_cert.crt -CAkey CA
 openssl ecparam -genkey -name prime256v1 -noout -out client.key
 
 # Create a CSR (Certificate Signing Request) for a pki cert
-echo "Creating a CSR for the clien"
+echo "Creating a CSR for the client"
 openssl req -new -key client.key -out client.csr -subj "/C=US/ST=CA/L=San Francisco/O=My Company/OU=IT Department/CN=pki.mycompany.com" -addext "subjectAltName=DNS:pki.mycompany.com"
 
 # Sign the CSR with the CA
