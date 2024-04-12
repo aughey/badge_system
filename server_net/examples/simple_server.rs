@@ -13,7 +13,7 @@ use std::error::Error as StdError;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::sync::Arc;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -49,6 +49,8 @@ async fn main() -> Result<(), Box<dyn StdError>> {
     let (stream, _) = listener.accept().await?;
     // turn stream into an async stream
     let mut stream = acceptor.accept(stream).await?;
+
+    stream.write("From server".as_bytes()).await?;
 
     // // Get past the handshake
     // while conn.is_handshaking() {
