@@ -1,15 +1,8 @@
-//! This is the simplest possible server using rustls that does something useful:
-//! it accepts the default configuration, loads a server certificate and private key,
-//! and then accepts a single client connection.
-//!
-//! Usage: cargo r --bin simpleserver <path/to/cert.pem> <path/to/privatekey.pem>
-//!
-//! Note that `unwrap()` is used to deal with networking errors; this is not something
-//! that is sensible outside of example code.
-
+use anyhow::Result;
 use rustls::crypto::{aws_lc_rs as provider, CryptoProvider};
+use rustls::server::WebPkiClientVerifier;
+use rustls::RootCertStore;
 use std::env;
-use std::error::Error as StdError;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::Arc;
@@ -17,17 +10,44 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn StdError>> {
+async fn main() -> Result<()> {
     let mut args = env::args();
     args.next();
-    let cert_file = args.next().expect("missing certificate file argument");
-    let private_key_file = args.next().expect("missing private key file argument");
+    let ca_file = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("missing ca file argument"))?;
+    let cert_file = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("missing certificate file argument"))?;
+    let private_key_file = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("missing private key file argument"))?;
+
+    let roots = {
+        let mut filebuf = BufReader::new(File::open(ca_file)?);
+        let root_ca = rustls_pemfile::certs(&mut filebuf);
+        let mut roots = RootCertStore::empty();
+        for cert in root_ca {
+            roots
+                .add(cert?)
+                .map_err(|_| anyhow::anyhow!("failed to add cert to root store"))?;
+        }
+        roots
+    };
 
     let certs = rustls_pemfile::certs(&mut BufReader::new(&mut File::open(cert_file)?))
         .collect::<Result<Vec<_>, _>>()?;
     let private_key =
-        rustls_pemfile::private_key(&mut BufReader::new(&mut File::open(private_key_file)?))?
-            .unwrap();
+        rustls_pemfile::private_key(&mut BufReader::new(&mut File::open(&private_key_file)?))?
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "no private key found in {:?} (encrypted keys not supported)",
+                    private_key_file
+                )
+            })?;
+
+    let client_verifier = WebPkiClientVerifier::builder(roots.into()).build().unwrap();
+
     let config = rustls::ServerConfig::builder_with_provider(
         CryptoProvider {
             cipher_suites: [
@@ -41,7 +61,7 @@ async fn main() -> Result<(), Box<dyn StdError>> {
         .into(),
     )
     .with_protocol_versions(&[&rustls::version::TLS13])?
-    .with_no_client_auth()
+    .with_client_cert_verifier(client_verifier)
     .with_single_cert(certs, private_key)?;
 
     let listener = TcpListener::bind(format!("[::]:{}", 4443)).await?;
@@ -66,7 +86,9 @@ async fn main() -> Result<(), Box<dyn StdError>> {
         match stream.read(&mut buf).await {
             Ok(0) => break,
             Ok(len) => {
-                let buf = std::str::from_utf8(&buf[..len]).unwrap();
+                let buf = std::str::from_utf8(&buf[..len]).map_err(|e| {
+                    anyhow::anyhow!("Could not convert buf into utf8 string: {e:?}")
+                })?;
                 println!("read {} bytes: {}", len, buf);
                 break;
             }

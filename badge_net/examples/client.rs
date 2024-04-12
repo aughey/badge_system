@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
         .read(&mut buf)
         .await
         .map_err(|e| anyhow::anyhow!("Failed to read data: {:?}", e))?;
-    let buf = std::str::from_utf8(&buf[..size]).unwrap();
+    let buf = std::str::from_utf8(&buf[..size])?;
     println!("read {} bytes: {}", size, buf);
 
     tls.write("Hello World from client".as_bytes())
