@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
         };
 
         info!("Writing to stream");
-        stream.write("From server".as_bytes()).await?;
+        stream.write("Hello world from server".as_bytes()).await?;
 
         // // Get past the handshake
         // while conn.is_handshaking() {
