@@ -4,17 +4,17 @@ use embedded_graphics::geometry::Dimensions as _;
 use embedded_graphics::image::Image;
 use embedded_graphics::mono_font::ascii::FONT_10X20;
 use embedded_graphics::mono_font::MonoTextStyle;
-use embedded_graphics::prelude::Primitive;
-use embedded_graphics::primitives::{Circle, PrimitiveStyleBuilder, StrokeAlignment};
+
+
 use embedded_graphics::Drawable;
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::{Point, Size},
     pixelcolor::BinaryColor,
-    primitives::{PrimitiveStyle, Rectangle},
+    primitives::{Rectangle},
 };
 use embedded_text::alignment::{HorizontalAlignment, VerticalAlignment};
-use embedded_text::style::{HeightMode, TextBoxStyleBuilder};
+use embedded_text::style::{TextBoxStyleBuilder};
 use embedded_text::TextBox;
 use tinybmp::Bmp;
 
