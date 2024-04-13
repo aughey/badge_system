@@ -66,63 +66,9 @@ pub fn main_js() -> Result<(), JsValue> {
         document.get_element_by_id("custom-container").as_ref(),
     );
 
-    {
-        let display = &mut text_display;
-        display.clear(BinaryColor::On).expect("clear");
-        // Note we're setting the Text color to `Off`. The driver is set up to treat Off as Black so that BMPs work as expected.
-        let character_style = MonoTextStyle::new(
-            &FONT_10X20,
-            // FONT_9X18_BOLD,
-            BinaryColor::Off,
-        );
-        let textbox_style = TextBoxStyleBuilder::new()
-            .height_mode(HeightMode::FitToText)
-            .alignment(HorizontalAlignment::Center)
-            .paragraph_spacing(6)
-            .build();
-
-        // Bounding box for our text. Fill it with the opposite color so we can read the text.
-        let bounds = Rectangle::new(Point::new(157, 10), Size::new(WIDTH - 157, 0));
-        bounds
-            .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
-            .draw(display)
-            .unwrap();
-
-        // Create the text box and apply styling options.
-        let text = "Embassy\nMy name is\nJohn Aughey";
-        let text_box = TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
-
-        let border_stroke = PrimitiveStyleBuilder::new()
-            .stroke_color(BinaryColor::Off)
-            .stroke_width(3)
-            .stroke_alignment(StrokeAlignment::Outside)
-            .build();
-
-        // Draw the text box.
-        text_box.draw(display).unwrap();
-        text_box
-            .bounding_box()
-            .into_styled(border_stroke)
-            .draw(display)
-            .unwrap();
-        const FERRIS_IMG: &[u8; 2622] = include_bytes!("../../badge/ferris_1bpp.bmp");
-
-        // Draw ferris
-        let tga: Bmp<BinaryColor> = Bmp::from_slice(FERRIS_IMG).unwrap();
-        let image = Image::new(&tga, Point::zero());
-        let _ = image.draw(display);
-        let _ = display.flush();
-    }
-
-    //let style = MonoTextStyle::new(&FONT_6X9, Rgb565::CSS_WHITE);
-
-    // if Text::new("Hello, wasm world!", Point::new(10, 30), style)
-    //     .draw(&mut text_display)
-    //     .is_err()
-    // {
-    //     console::log_1(&"Couldn't draw text".into());
-    // }
-    // text_display.flush().expect("could not flush buffer");
+    let display = &mut text_display;
+    badge_draw::draw_display(display).expect("could not draw display");
+    display.flush().expect("could not flush buffer");
 
     // Load the BMP image
     let bmp = Bmp::from_slice(include_bytes!("../assets/rust-pride.bmp")).unwrap();
