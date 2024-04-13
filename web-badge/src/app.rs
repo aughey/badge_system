@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -45,30 +47,65 @@ fn HomePage() -> impl IntoView {
 fn Badge() -> impl IntoView {
     let screen_container = create_node_ref::<leptos::html::Div>();
 
-    create_effect(move |_| {
-        use embedded_graphics_web_simulator::{
-            display::WebSimulatorDisplay, output_settings::OutputSettingsBuilder,
-        };
+    let display = Rc::new(RefCell::new(None));
 
-        let sc = screen_container.get().unwrap();
-    const WIDTH: u32 = 296;
-    const HEIGHT: u32 = 128;
-    let output_settings = OutputSettingsBuilder::new()
-        .scale(1)
-        .pixel_spacing(1)
-        .build();
-        let mut text_display = WebSimulatorDisplay::new((WIDTH, HEIGHT), &output_settings, Some(&sc));
+    const INITIAL_TEXT: &str = "Enter Text Here";
+    {
+        let display = display.clone();
+        create_effect(move |_| {
+            use embedded_graphics_web_simulator::{
+                display::WebSimulatorDisplay, output_settings::OutputSettingsBuilder,
+            };
 
-        badge_draw::draw_display(&mut text_display).expect("could not draw display");
-        text_display.flush().expect("could not flush buffer"); 
+            let sc = screen_container.get().unwrap();
+            const WIDTH: u32 = 296;
+            const HEIGHT: u32 = 128;
+            let output_settings = OutputSettingsBuilder::new()
+                .scale(1)
+                .pixel_spacing(1)
+                .build();
+            let mut text_display =
+                WebSimulatorDisplay::new((WIDTH, HEIGHT), &output_settings, Some(&sc));
 
-    });
+            badge_draw::draw_display(&mut text_display, INITIAL_TEXT)
+                .expect("could not draw display");
+            text_display.flush().expect("could not flush buffer");
+
+            display.replace(Some(text_display));
+        });
+    }
+
+    let update_display = move |text: &str| {
+        //        let text = text.get();
+        // strip any non-ascii characters
+        let text = text.chars().filter(|c| c.is_ascii()).collect::<String>();
+        if let Some(display) = display.borrow_mut().as_mut() {
+            badge_draw::draw_display(display, text.as_str()).expect("could not draw text");
+            display.flush().expect("could not flush buffer");
+        }
+    };
+
+    let input_ref = create_node_ref::<leptos::html::Textarea>();
+
+    let get_input = {
+        let input_ref = input_ref.clone();
+        move || {
+            input_ref
+                .get()
+                .map(|v| v.value())
+                .unwrap_or_else(|| "".to_string())
+        }
+    };
 
     view! {
         <div>
         <h1>"Badge"</h1>
         <div _ref=screen_container id="custom-container">
         </div>
+        <textarea _ref=input_ref
+        on:input=move |_| update_display(get_input().as_str())>
+        {INITIAL_TEXT}
+        </textarea>
         </div>
     }
 }

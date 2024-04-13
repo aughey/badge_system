@@ -5,21 +5,21 @@ use embedded_graphics::image::Image;
 use embedded_graphics::mono_font::ascii::FONT_10X20;
 use embedded_graphics::mono_font::MonoTextStyle;
 
-
 use embedded_graphics::Drawable;
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::{Point, Size},
     pixelcolor::BinaryColor,
-    primitives::{Rectangle},
+    primitives::Rectangle,
 };
 use embedded_text::alignment::{HorizontalAlignment, VerticalAlignment};
-use embedded_text::style::{TextBoxStyleBuilder};
+use embedded_text::style::TextBoxStyleBuilder;
 use embedded_text::TextBox;
 use tinybmp::Bmp;
 
 pub fn draw_display(
     display: &mut impl DrawTarget<Color = BinaryColor>,
+    text: &str,
 ) -> Result<(), &'static str> {
     display.clear(BinaryColor::On).map_err(|_| "clear")?;
 
@@ -60,7 +60,7 @@ pub fn draw_display(
     //     .map_err(|_| "text box")?;
 
     // Create the text box and apply styling options.
-    let text = "Embassy\nMy name\nJohn Aughey";
+    //let text = "Embassy\nMy name\nJohn Aughey";
     let text_box = TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
 
     // Draw the text box.
