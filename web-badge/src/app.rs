@@ -37,6 +37,39 @@ fn HomePage() -> impl IntoView {
     view! {
         <h1>"Welcome to Leptos!"</h1>
         <button on:click=on_click>"Click Me: " {count}</button>
+        <Badge/>
+    }
+}
+
+#[component]
+fn Badge() -> impl IntoView {
+    let screen_container = create_node_ref::<leptos::html::Div>();
+
+    create_effect(move |_| {
+        use embedded_graphics_web_simulator::{
+            display::WebSimulatorDisplay, output_settings::OutputSettingsBuilder,
+        };
+
+        let sc = screen_container.get().unwrap();
+    const WIDTH: u32 = 296;
+    const HEIGHT: u32 = 128;
+    let output_settings = OutputSettingsBuilder::new()
+        .scale(1)
+        .pixel_spacing(1)
+        .build();
+        let mut text_display = WebSimulatorDisplay::new((WIDTH, HEIGHT), &output_settings, Some(&sc));
+
+        badge_draw::draw_display(&mut text_display).expect("could not draw display");
+        text_display.flush().expect("could not flush buffer"); 
+
+    });
+
+    view! {
+        <div>
+        <h1>"Badge"</h1>
+        <div _ref=screen_container id="custom-container">
+        </div>
+        </div>
     }
 }
 

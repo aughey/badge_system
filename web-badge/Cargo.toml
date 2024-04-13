@@ -16,6 +16,10 @@ leptos_meta = { version = "0.6", features = ["nightly"] }
 leptos_actix = { version = "0.6", optional = true }
 leptos_router = { version = "0.6", features = ["nightly"] }
 wasm-bindgen = "=0.2.92"
+embedded-graphics-web-simulator = "0.4.0"
+embedded-graphics = "0.8.1"
+badge_draw = { version = "0.1.0", path = "../badge_draw" }
+web-sys = { version = "0.3.69", features = ["Element", "HtmlCanvasElement", "HtmlDivElement"] }
 
 [features]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
