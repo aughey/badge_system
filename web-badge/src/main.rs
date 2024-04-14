@@ -1,8 +1,14 @@
 #[cfg(feature = "ssr")]
+mod websockets;
+
+#[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use std::{fs::File, io::BufReader};
+
     use actix_files::Files;
     use actix_web::*;
+    use actix_web_actors::ws;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
     use web_badge::app::*;
@@ -24,6 +30,7 @@ async fn main() -> std::io::Result<()> {
             .service(Files::new("/assets", site_root))
             // serve the favicon from /favicon.ico
             .service(favicon)
+            .service(web::resource("/ws").route(web::get().to(websockets::index)))
             .leptos_routes(leptos_options.to_owned(), routes.to_owned(), App)
             .app_data(web::Data::new(leptos_options.to_owned()))
         //.wrap(middleware::Compress::default())

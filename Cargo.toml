@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["badge_draw", "badge_net", "run-wasm", "server_net", "web-badge"]
+members = ["badge_draw", "badge_net", "run-wasm", "server_net", "web-badge", "websockets"]
 exclude = ["badge", "basic-example"]
 
 [patch.crates-io]

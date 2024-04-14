@@ -20,7 +20,7 @@ openssl genrsa -out server.key 2048
 
 # Create a CSR (Certificate Signing Request) for a server cert
 echo "Creating a CSR for the server"
-openssl req -new -key server.key -out server.csr -subj "/C=US/ST=CA/L=Saint Louis/O=ThinkSplat/OU=IT Department/CN=server.mycompany.com"
+openssl req -new -key server.key -out server.csr -subj "/C=US/ST=CA/L=Saint Louis/O=ThinkSplat/OU=IT Department/CN=localhost"
 
 # Sign the cerver CSR with the CA
 echo "Signing the server CSR with the CA"
