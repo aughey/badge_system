@@ -30,6 +30,8 @@ uc8151 = "0.2.0"
 cyw43-pio = "0.1.0"
 cyw43 = "0.1.0"
 embassy-net = { version = "0.4.0", features = ["dhcpv4", "tcp", "medium-ethernet", "udp"] }
+embedded-io-async = "0.6.1"
+heapless = "0.8.0"
 
 [profile.release]
 debug = 2

@@ -9,13 +9,13 @@ use tokio::net::TcpStream;
 async fn main() -> Result<()> {
     let client = TcpStream::connect("127.0.0.1:4443").await?;
 
-    let ca = include_str!("../../CA_cert.crt");
+    let ca = include_str!("../../certs/CA_cert.crt");
     let ca = pem_parser::pem_to_der(ca);
 
-    let cert = include_str!("../../client.crt");
+    let cert = include_str!("../../certs/client.crt");
     let cert = pem_parser::pem_to_der(cert);
 
-    let key = include_str!("../../client.key");
+    let key = include_str!("../../certs/client.key");
     let key = pem_parser::pem_to_der(key);
 
     let config = TlsConfig::new()
