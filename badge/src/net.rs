@@ -136,6 +136,15 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
     let ipaddr = stack.config_v4().unwrap().address.address();
 
+    let ca = include_str!("../certs/CA_cert.crt");
+    let ca = pem_parser::pem_to_der(ca);
+
+    let cert = include_str!("../../certs/client.crt");
+    let cert = pem_parser::pem_to_der(cert);
+
+    let key = include_str!("../../certs/client.key");
+    let key = pem_parser::pem_to_der(key);
+
     // And now we can use it!
 
     let mut rx_buffer = [0; 4096];

@@ -250,6 +250,8 @@ async fn main(spawner: Spawner) {
 
     let up_button = Input::new(p.PIN_15, Pull::Up);
 
+    let led = Output::new(p.PIN_25, Level::Low);
+
     spawn_core1(
         p.CORE1,
         unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
