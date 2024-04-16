@@ -16,6 +16,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 use embedded_graphics::primitives::PrimitiveStyleBuilder;
 use embedded_graphics::primitives::StrokeAlignment;
+pub mod net;
 //use hal::halt;
 // The macro for our start-up function
 
@@ -71,8 +72,8 @@ enum LedState {
 }
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
-    let p = embassy_rp::init(Default::default());
+async fn main(spawner: Spawner) {
+    let p: embassy_rp::Peripherals = embassy_rp::init(Default::default());
 
     // Grab our singleton objects
     let mut pac = pac::Peripherals::take().unwrap();
@@ -192,6 +193,29 @@ async fn main(_spawner: Spawner) {
         let _ = display.update();
         display
     };
+
+    let status = |text: &str| {
+        display.clear(BinaryColor::On).unwrap();
+        let bounds = display.bounding_box();
+        let character_style = MonoTextStyle::new(
+            &FONT_10X20,
+            // FONT_9X18_BOLD,
+            BinaryColor::Off,
+        );
+        let textbox_style = TextBoxStyleBuilder::new()
+            .height_mode(HeightMode::FitToText)
+            .alignment(HorizontalAlignment::Center)
+            .paragraph_spacing(6)
+            .build();
+        let text_box = TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
+
+        text_box.draw(&mut display).unwrap();
+        display.update().unwrap();
+    };
+
+    crate::net::main_net(p, spawner, status).await;
+
+    return;
 
     let up_button = Input::new(p.PIN_15, Pull::Up);
 
