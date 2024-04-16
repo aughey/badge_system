@@ -4,6 +4,7 @@
 
 #![no_std]
 #![no_main]
+#![allow(unreachable_code)]
 
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayUs;
 use defmt::*;
@@ -75,18 +76,25 @@ enum LedState {
 async fn main(spawner: Spawner) {
     let p: embassy_rp::Peripherals = embassy_rp::init(Default::default());
 
-    // Grab our singleton objects
-    let mut pac = pac::Peripherals::take().unwrap();
-    // The single-cycle I/O block controls our GPIO pins
-    let sio = hal::Sio::new(pac.SIO);
+    // // Grab our singleton objects
+    // let mut pac = pac::Peripherals::take().unwrap();
+    // // // The single-cycle I/O block controls our GPIO pins
+    // let sio = hal::Sio::new(pac.SIO);
 
-    // Set the pins up according to their function on this particular board
-    let pins = pimoroni_badger2040::Pins::new(
-        pac.IO_BANK0,
-        pac.PADS_BANK0,
-        sio.gpio_bank0,
-        &mut pac.RESETS,
-    );
+    // let empty_status = |_: &str| {};
+    // crate::net::main_net(p, spawner, empty_status).await;
+    // return;
+
+    // // Set the pins up according to their function on this particular board
+    // let pins = pimoroni_badger2040::Pins::new(
+    //     embassy_rp::pac::IO_BANK0,
+    //     //        pac.IO_BANK0,
+    //     embassy_rp::pac::PADS_BANK0,
+    //     //pac.PADS_BANK0,
+    //     embassy_rp::pac::sio::gpio_bank0,
+    //     //        sio.gpio_bank0
+    //     &mut pac.RESETS,
+    // );
     // Set the LED to be an output
     //let mut led_pin = pins.led.into_push_pull_output();
 
@@ -94,46 +102,58 @@ async fn main(spawner: Spawner) {
     //let mut timer = HalTimer::new(pac.TIMER, &mut pac.RESETS, &clocks);
     let mut display = {
         // Set up the watchdog driver - needed by the clock setup code
-        let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
+        // let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
 
-        // The default is to generate a 125 MHz system clock
-        let clocks = hal::clocks::init_clocks_and_plls(
-            pimoroni_badger2040::XOSC_CRYSTAL_FREQ,
-            pac.XOSC,
-            pac.CLOCKS,
-            pac.PLL_SYS,
-            pac.PLL_USB,
-            &mut pac.RESETS,
-            &mut watchdog,
-        )
-        .ok()
-        .unwrap();
+        // // The default is to generate a 125 MHz system clock
+        // let clocks = hal::clocks::init_clocks_and_plls(
+        //     pimoroni_badger2040::XOSC_CRYSTAL_FREQ,
+        //     pac.XOSC,
+        //     pac.CLOCKS,
+        //     pac.PLL_SYS,
+        //     pac.PLL_USB,
+        //     &mut pac.RESETS,
+        //     &mut watchdog,
+        // )
+        // .ok()
+        // .unwrap();
 
         // We use the embassy time Delay so the hal doesn't take control of the timer
         let mut timer = embassy_time::Delay;
 
         // Set up the pins for the e-ink display
-        let spi_sclk = pins.sclk.into_function::<hal::gpio::FunctionSpi>();
-        let spi_mosi = pins.mosi.into_function::<hal::gpio::FunctionSpi>();
-        let spi = hal::Spi::<_, _, _>::new(pac.SPI0, (spi_mosi, spi_sclk));
-        let mut dc = pins.inky_dc.into_push_pull_output();
-        let mut cs = pins.inky_cs_gpio.into_push_pull_output();
-        let busy = pins.inky_busy.into_pull_up_input();
-        let reset = pins.inky_res.into_push_pull_output();
+        // let spi_sclk = pins.sclk.into_function::<hal::gpio::FunctionSpi>();
+        //        let spi_mosi = pins.mosi.into_function::<hal::gpio::FunctionSpi>();
+
+        let mut spi_cfg = embassy_rp::spi::Config::default();
+        spi_cfg.frequency = 12_000_000;
+        let clk = p.PIN_18;
+        let mosi = p.PIN_19;
+        let miso = p.PIN_16;
+        let spi = embassy_rp::spi::Spi::new(p.SPI0, clk, mosi, miso, p.DMA_CH2, p.DMA_CH3, spi_cfg);
+
+        // let mut dc = pins.inky_dc.into_push_pull_output();
+        // let mut cs = pins.inky_cs_gpio.into_push_pull_output();
+        // let busy = pins.inky_busy.into_pull_up_input();
+        // let reset = pins.inky_res.into_push_pull_output();
+        let mut dc = Output::new(p.PIN_20, Level::Low);
+        let mut cs = Output::new(p.PIN_17, Level::High);
+        let busy = Input::new(p.PIN_26, Pull::Up);
+        let mut reset = Output::new(p.PIN_21, Level::Low);
 
         // Enable 3.3V power or you won't see anything
-        let mut power = pins.p3v3_en.into_push_pull_output();
-        power.set_high().unwrap();
+        //        let mut power = pins.p3v3_en.into_push_pull_output();
+        let mut power = Output::new(p.PIN_10, Level::High);
+        power.set_high();
 
-        let spi = spi.init(
-            &mut pac.RESETS,
-            clocks.peripheral_clock.freq(),
-            RateExtU32::MHz(1),
-            embedded_hal::spi::MODE_0,
-        );
+        // let spi = spi.init(
+        //     &mut pac.RESETS,
+        //     clocks.peripheral_clock.freq(),
+        //     RateExtU32::MHz(1),
+        //     embedded_hal::spi::MODE_0,
+        // );
 
-        dc.set_high().unwrap();
-        cs.set_high().unwrap();
+        dc.set_high(); //.unwrap();
+        cs.set_high(); //.unwrap();
 
         let mut display = uc8151::Uc8151::new(spi, cs, dc, busy, reset);
 
@@ -213,7 +233,19 @@ async fn main(spawner: Spawner) {
         display.update().unwrap();
     };
 
-    crate::net::main_net(p, spawner, status).await;
+    crate::net::main_net(
+        crate::net::NetPins {
+            PIN_23: p.PIN_23,
+            PIN_25: p.PIN_25,
+            PIO0: p.PIO0,
+            PIN_24: p.PIN_24,
+            PIN_29: p.PIN_29,
+            DMA_CH0: p.DMA_CH0,
+        },
+        spawner,
+        status,
+    )
+    .await;
 
     return;
 

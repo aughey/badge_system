@@ -12,7 +12,7 @@ use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config, Stack, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::{Level, Output};
-use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_25, PIO0};
+use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_24, PIN_25, PIN_29, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
@@ -42,7 +42,17 @@ async fn net_task(stack: &'static Stack<cyw43::NetDriver<'static>>) -> ! {
     stack.run().await
 }
 
-pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: impl FnMut(&str)) {
+#[allow(non_snake_case)]
+pub struct NetPins {
+    pub PIN_23: PIN_23,
+    pub PIN_25: PIN_25,
+    pub PIO0: PIO0,
+    pub PIN_24: PIN_24,
+    pub PIN_29: PIN_29,
+    pub DMA_CH0: DMA_CH0,
+}
+
+pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)) {
     info!("Hello World!");
 
     status("Starting net initialization");
@@ -76,13 +86,11 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
     let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
     status("Spawning wifi task");
     unwrap!(spawner.spawn(wifi_task(runner)));
-    control.gpio_set(0, true).await;
 
     control.init(clm).await;
     control
         .set_power_management(cyw43::PowerManagementMode::None)
         .await;
-    control.gpio_set(0, false).await;
 
     let config = Config::dhcpv4(Default::default());
     //let config = embassy_net::Config::ipv4_static(embassy_net::StaticConfigV4 {
@@ -105,7 +113,6 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
     ));
 
     unwrap!(spawner.spawn(net_task(stack)));
-    control.gpio_set(0, true).await;
 
     status("Joining wpa2");
     loop {
@@ -117,7 +124,6 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
             }
         }
     }
-    control.gpio_set(0, false).await;
 
     // Wait for DHCP, not necessary when using static IP
     info!("waiting for DHCP...");
@@ -127,7 +133,6 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
     }
     info!("DHCP is now up!");
     status("DHCP is now up!");
-    control.gpio_set(0, true).await;
 
     // And now we can use it!
 
@@ -139,7 +144,6 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
         socket.set_timeout(Some(Duration::from_secs(10)));
 
-        control.gpio_set(0, false).await;
         status("Waiting for connection");
         info!("Listening on TCP:1234...");
         if let Err(e) = socket.accept(1234).await {
@@ -148,7 +152,6 @@ pub async fn main_net(p: embassy_rp::Peripherals, spawner: Spawner, mut status: 
         }
 
         info!("Received connection from {:?}", socket.remote_endpoint());
-        control.gpio_set(0, true).await;
 
         loop {
             let n = match socket.read(&mut buf).await {
