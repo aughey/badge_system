@@ -134,6 +134,8 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
     info!("DHCP is now up!");
     status("DHCP is now up!");
 
+    let ipaddr = stack.config_v4().unwrap().address.address();
+
     // And now we can use it!
 
     let mut rx_buffer = [0; 4096];
@@ -144,12 +146,16 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
         socket.set_timeout(Some(Duration::from_secs(10)));
 
-        status("Waiting for connection");
+        let mut print_buf = [0u8; 64];
+        let ipaddr_str =
+            format_no_std::show(&mut print_buf, format_args!("Ip: {}", ipaddr)).unwrap();
+        status(ipaddr_str); //"Waiting for connection");
         info!("Listening on TCP:1234...");
         if let Err(e) = socket.accept(1234).await {
             warn!("accept error: {:?}", e);
             continue;
         }
+        status("Connected");
 
         info!("Received connection from {:?}", socket.remote_endpoint());
 
@@ -165,6 +171,15 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
                     break;
                 }
             };
+
+            if let Ok(txt) = format_no_std::show(
+                &mut print_buf,
+                format_args!("rxd {}", from_utf8(&buf[..n]).unwrap()),
+            ) {
+                status(txt);
+            } else {
+                status("too big");
+            }
 
             info!("rxd {}", from_utf8(&buf[..n]).unwrap());
 

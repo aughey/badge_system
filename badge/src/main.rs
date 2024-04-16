@@ -6,12 +6,10 @@
 #![no_main]
 #![allow(unreachable_code)]
 
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayUs;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_rp::gpio::{Input, Level, Output, Pull};
-use embassy_time::{Duration, Timer};
-use embedded_hal::{delay::DelayNs as _, digital::OutputPin as _};
+use embassy_time::Timer;
 use uc8151::UpdateRegion;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -34,7 +32,6 @@ pub mod net;
 // use pimoroni_badger2040::hal;
 // A shorter alias for the Hardware Abstraction Layer, which provides
 // higher-level drivers.
-use fugit::RateExtU32;
 
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
@@ -50,9 +47,9 @@ use embedded_text::{
     style::{HeightMode, TextBoxStyleBuilder},
     TextBox,
 };
-use pimoroni_badger2040::hal;
-use pimoroni_badger2040::hal::pac;
-use pimoroni_badger2040::hal::Clock;
+// use pimoroni_badger2040::hal;
+// use pimoroni_badger2040::hal::pac;
+// use pimoroni_badger2040::hal::Clock;
 
 use embassy_executor::Executor;
 use embassy_rp::multicore::{spawn_core1, Stack};
@@ -138,7 +135,7 @@ async fn main(spawner: Spawner) {
         let mut dc = Output::new(p.PIN_20, Level::Low);
         let mut cs = Output::new(p.PIN_17, Level::High);
         let busy = Input::new(p.PIN_26, Pull::Up);
-        let mut reset = Output::new(p.PIN_21, Level::Low);
+        let reset = Output::new(p.PIN_21, Level::Low);
 
         // Enable 3.3V power or you won't see anything
         //        let mut power = pins.p3v3_en.into_push_pull_output();
@@ -214,7 +211,7 @@ async fn main(spawner: Spawner) {
         display
     };
 
-    let status = |text: &str| {
+    let mut status = |text: &str| {
         display.clear(BinaryColor::On).unwrap();
         let bounds = display.bounding_box();
         let character_style = MonoTextStyle::new(
@@ -233,6 +230,8 @@ async fn main(spawner: Spawner) {
         display.update().unwrap();
     };
 
+    status("Starting net...");
+
     crate::net::main_net(
         crate::net::NetPins {
             PIN_23: p.PIN_23,
@@ -250,8 +249,6 @@ async fn main(spawner: Spawner) {
     return;
 
     let up_button = Input::new(p.PIN_15, Pull::Up);
-
-    let led = Output::new(p.PIN_25, Level::Low);
 
     spawn_core1(
         p.CORE1,
