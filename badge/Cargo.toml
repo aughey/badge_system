@@ -32,6 +32,12 @@ cyw43 = "0.1.0"
 embassy-net = { version = "0.4.0", features = ["dhcpv4", "tcp", "medium-ethernet", "udp"] }
 embedded-io-async = "0.6.1"
 format_no_std = "1.1.0"
+pem = { version = "3.0.4", default-features = false }
+embedded-alloc = "0.5.1"
+embedded-tls = { version = "0.17.0", default-features = false }
+rand = { version = "0.8.5", default-features = false, features = ["small_rng"] }
+nanorand = { version = "0.7.0", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
 
 [profile.release]
 debug = 2

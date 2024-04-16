@@ -16,6 +16,7 @@ use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_24, PIN_25, PIN_29, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
+use rand::SeedableRng;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -136,14 +137,24 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
     let ipaddr = stack.config_v4().unwrap().address.address();
 
-    let ca = include_str!("../certs/CA_cert.crt");
-    let ca = pem_parser::pem_to_der(ca);
+    //#[cfg(foobar)]
+
+    let ca = include_str!("../../certs/CA_cert.crt");
+    let ca = pem::parse(ca).unwrap();
 
     let cert = include_str!("../../certs/client.crt");
-    let cert = pem_parser::pem_to_der(cert);
+    let cert = pem::parse(cert).unwrap();
 
     let key = include_str!("../../certs/client.key");
-    let key = pem_parser::pem_to_der(key);
+    let key = pem::parse(key).unwrap();
+
+    use embedded_tls::{Certificate, TlsConfig, TlsConnection, TlsContext};
+
+    let config = TlsConfig::new()
+        .enable_rsa_signatures()
+        .with_ca(Certificate::X509(ca.contents()))
+        .with_priv_key(key.contents())
+        .with_cert(Certificate::X509(cert.contents()));
 
     // And now we can use it!
 
@@ -153,6 +164,7 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
     loop {
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
+
         socket.set_timeout(Some(Duration::from_secs(10)));
 
         let mut print_buf = [0u8; 64];
@@ -168,8 +180,31 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
         info!("Received connection from {:?}", socket.remote_endpoint());
 
+        let mut read_record_buffer = [0u8; 16384];
+        let mut write_record_buffer = [0u8; 16384];
+        let mut tls = TlsConnection::new(
+            socket,
+            //embedded_io_adapters::std::FromStd::new(client),
+            &mut read_record_buffer,
+            &mut write_record_buffer,
+        );
+
+        tls.open(TlsContext::new(
+            &config,
+            embedded_tls::UnsecureProvider::new::<embedded_tls::Aes128GcmSha256>(
+                rand_chacha::ChaChaRng::seed_from_u64(1234),
+            ),
+        ))
+        .await
+        .unwrap();
+        //.map_err(|e| anyhow::anyhow!("Failed to open connection: {:?}", e))?;
+
+        status("TLS connection established!");
+
+        println!("TLS connection established!");
+
         loop {
-            let n = match socket.read(&mut buf).await {
+            let n = match tls.read(&mut buf).await {
                 Ok(0) => {
                     warn!("read EOF");
                     break;
@@ -192,7 +227,7 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
             info!("rxd {}", from_utf8(&buf[..n]).unwrap());
 
-            match socket.write_all(&buf[..n]).await {
+            match tls.write_all(&buf[..n]).await {
                 Ok(()) => {}
                 Err(e) => {
                     warn!("write error: {:?}", e);

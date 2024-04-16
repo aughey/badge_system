@@ -69,9 +69,21 @@ enum LedState {
     Off,
 }
 
+use embedded_alloc::Heap;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p: embassy_rp::Peripherals = embassy_rp::init(Default::default());
+    // Initialize the allocator BEFORE you use it
+    if false {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 2048;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
 
     // // Grab our singleton objects
     // let mut pac = pac::Peripherals::take().unwrap();
