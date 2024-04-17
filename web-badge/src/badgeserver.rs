@@ -101,31 +101,57 @@ pub async fn server(args: impl IntoIterator<Item = String>) -> Result<()> {
     Ok(())
 }
 
-async fn read_request<C>(stream: C) -> Result<Request> {}
+struct ReadWriteWrapper<T> {
+    inner: T,
+}
+impl<T> badge_net::AsyncRead for ReadWriteWrapper<T>
+where
+    T: AsyncReadExt + Unpin,
+{
+    type Error = tokio::io::Error;
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Self::Error> {
+        self.inner.read_exact(buf).await?;
+        Ok(())
+    }
+}
+impl<T> badge_net::AsyncWrite for ReadWriteWrapper<T>
+where
+    T: AsyncWriteExt + Unpin,
+{
+    type Error = tokio::io::Error;
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error> {
+        self.inner.write_all(buf).await?;
+        Ok(())
+    }
+}
 
 async fn handle_connection<C>(stream: C) -> Result<()>
 where
     C: AsyncReadExt + AsyncWriteExt + Unpin,
 {
-    let mut stream = stream;
+    let mut stream = ReadWriteWrapper { inner: stream };
     info!("Reading from stream");
     loop {
         let mut buf = [0u8; 1024];
 
-        match stream.read(&mut buf).await {
-            Ok(0) => break,
-            Ok(len) => {
-                let buf = std::str::from_utf8(&buf[..len]).map_err(|e| {
-                    anyhow::anyhow!("Could not convert buf into utf8 string: {e:?}")
-                })?;
-                println!("read {} bytes: {}", len, buf);
-                break;
-            }
-            Err(e) => {
-                eprintln!("read error: {:?}", e);
-                break;
-            }
+        let request =
+            badge_net::read_framed_value::<badge_net::Request>(&mut stream, buf.as_mut_slice())
+                .await
+                .map_err(anyhow::Error::msg)?;
+        if request == badge_net::Request::Close {
+            break;
         }
+
+        badge_net::write_frame(
+            &mut stream,
+            &badge_net::Update {
+                text: "Hello from server",
+                freq: 123,
+            },
+            buf.as_mut_slice(),
+        )
+        .await
+        .map_err(anyhow::Error::msg)?;
     }
 
     Ok(())

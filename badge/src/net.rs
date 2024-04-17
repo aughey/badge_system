@@ -203,37 +203,48 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
         println!("TLS connection established!");
 
+        let tls = EmbeddedAsyncWrapper(tls);
+
         loop {
-            let n = match tls.read(&mut buf).await {
-                Ok(0) => {
-                    warn!("read EOF");
-                    break;
-                }
-                Ok(n) => n,
-                Err(e) => {
-                    warn!("read error: {:?}", e);
-                    break;
-                }
-            };
-
-            if let Ok(txt) = format_no_std::show(
-                &mut print_buf,
-                format_args!("rxd {}", from_utf8(&buf[..n]).unwrap()),
-            ) {
-                status(txt);
-            } else {
-                status("too big");
+            // Send a request message
+            if let Err(e) =
+                badge_net::write_frame(&mut tls, &badge_net::Request::Ready, &mut buf).await
+            {
+                status(e);
+                break;
             }
+            // Get a Update message
+            let update =
+                match badge_net::read_framed_value::<badge_net::Update>(&mut tls, &mut buf).await {
+                    Ok(update) => update,
+                    Err(e) => {
+                        status(e);
+                        break;
+                    }
+                };
 
-            info!("rxd {}", from_utf8(&buf[..n]).unwrap());
-
-            match tls.write_all(&buf[..n]).await {
-                Ok(()) => {}
-                Err(e) => {
-                    warn!("write error: {:?}", e);
-                    break;
-                }
-            };
+            status(update.text);
         }
+    }
+}
+
+struct EmbeddedAsyncWrapper<T>(T);
+
+impl<T> badge_net::AsyncRead for EmbeddedAsyncWrapper<T>
+where
+    T: embedded_io_async::Read + Unpin,
+{
+    type Error = embedded_io_async::ReadExactError<T::Error>;
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Self::Error> {
+        self.0.read_exact(buf).await
+    }
+}
+impl<T> badge_net::AsyncWrite for EmbeddedAsyncWrapper<T>
+where
+    T: embedded_io_async::Write + Unpin,
+{
+    type Error = T::Error;
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error> {
+        self.0.write_all(buf).await
     }
 }
