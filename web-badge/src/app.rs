@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use web_sys::console::log;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -32,8 +33,39 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
+    let options = [50, 100, 250, 500, 1000];
+    let selected = 100;
+    let (value, set_value) = create_signal(selected.to_string());
+
+    create_effect(move |_| {
+        let value = value().parse().unwrap();
+        spawn_local(async move {
+            update_frequency(value).await.unwrap();
+            ()
+        });
+    });
+
+    let option_view = options.iter().map(|v| {
+        let v = v.to_string();
+        view! {
+            <option selected=if v == value.get() { "selected" } else { "" }>
+                {v}
+            </option>
+        }
+    });
+
     view! {
         <Badge/>
+         <select on:change=move |ev| {
+        let new_value = event_target_value(&ev);
+        set_value(new_value);
+    }>
+        {options.into_iter().map(|v| v.to_string()).map(|v| view! {
+            <option selected=if v == value() { "selected" } else { "" }>
+                {v}
+            </option>
+        }).collect_view()}
+    </select>
     }
 }
 
@@ -124,4 +156,12 @@ fn NotFound() -> impl IntoView {
     view! {
         <h1>"Not Found"</h1>
     }
+}
+
+#[server(UpdateFreq, "/updatefreq")]
+async fn update_frequency(freq: u64) -> Result<String, ServerFnError> {
+    use tracing::info;
+    info!("Updating frequency to {freq}");
+    crate::badge_channels::set_frequency(freq);
+    Ok(format!("Updated frequency to {freq}"))
 }

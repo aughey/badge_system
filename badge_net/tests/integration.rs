@@ -11,6 +11,10 @@ impl AsyncWrite for VecWrap {
         self.0.extend_from_slice(buf);
         Ok(())
     }
+
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 
 impl AsyncRead for VecWrap {
@@ -47,8 +51,8 @@ async fn test_framing() {
     assert_eq!(stream.0.len(), 0);
 
     let update = Update {
-        text: "Hello World",
-        freq: 123,
+        text: Some("Hello World"),
+        freq: Some(123),
     };
 
     write_frame(&mut stream, &update, buf.as_mut_slice())

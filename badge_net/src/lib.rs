@@ -30,9 +30,9 @@ impl TryFrom<&[u8]> for Request {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Update<'a> {
     /// Text to display
-    pub text: &'a str,
+    pub text: Option<&'a str>,
     /// Frequency of the LED
-    pub freq: u64,
+    pub freq: Option<u64>,
 }
 impl Update<'_> {
     /// Serialize the update
@@ -178,15 +178,14 @@ mod tests {
     fn test_update_serialize() {
         let mut buf = [0u8; 64];
         let msg = Update {
-            text: "Hello, World!",
-            freq: 10,
+            text: Some("Hello, World!"),
+            freq: Some(10),
         };
         let buf = postcard::to_slice(&msg, &mut buf).unwrap();
         assert!(buf.len() > 0);
 
         let update: Update = postcard::from_bytes(buf).unwrap();
-        assert_eq!(update.text, "Hello, World!");
-        assert_eq!(update.freq, 10);
+        assert_eq!(update, msg);
     }
 
     #[test]
@@ -198,8 +197,8 @@ mod tests {
         assert_eq!(req, req2);
 
         let update = Update {
-            text: "Hello, World!",
-            freq: 10,
+            text: Some("Hello, World!"),
+            freq: Some(10),
         };
         let mut buf = [0u8; 64];
         let buf = update.serialize(&mut buf).unwrap();

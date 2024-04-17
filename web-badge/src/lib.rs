@@ -1,5 +1,8 @@
 pub mod app;
 
+#[cfg(feature = "ssr")]
+pub mod badge_channels;
+
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {

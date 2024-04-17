@@ -20,7 +20,13 @@ async fn main() -> std::io::Result<()> {
 
     let args = env::args().collect::<Vec<_>>();
     tokio::spawn(async {
-        badgeserver::server(args).await.unwrap();
+        badgeserver::server(
+            args,
+            web_badge::badge_channels::get_frequency,
+            web_badge::badge_channels::get_text,
+        )
+        .await
+        .unwrap();
     });
 
     let conf = get_configuration(None).await.unwrap();

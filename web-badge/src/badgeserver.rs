@@ -9,7 +9,11 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tracing::{error, info};
 
-pub async fn server(args: impl IntoIterator<Item = String>) -> Result<()> {
+pub async fn server(
+    args: impl IntoIterator<Item = String>,
+    get_frequency: impl Fn() -> Option<u64> + Send + 'static + Clone,
+    get_text: impl Fn() -> Option<String> + Send + 'static + Clone,
+) -> Result<()> {
     let mut args = args.into_iter();
     args.next();
     let ca_file = args
@@ -89,10 +93,12 @@ pub async fn server(args: impl IntoIterator<Item = String>) -> Result<()> {
             }
         };
 
-        let mut stream = ReadWriteWrapper { inner: stream };
+        let stream = ReadWriteWrapper { inner: stream };
 
+        let get_frequency = get_frequency.clone();
+        let get_text = get_text.clone();
         tokio::spawn(async move {
-            match handle_connection(stream).await {
+            match handle_connection(stream, get_frequency, get_text).await {
                 Ok(_) => info!("Connection handled successfully"),
                 Err(e) => error!("Error handling connection: {:?}", e),
             }
@@ -131,7 +137,11 @@ where
     }
 }
 
-async fn handle_connection<C>(mut stream: C) -> Result<()>
+async fn handle_connection<C>(
+    mut stream: C,
+    get_rate: impl Fn() -> Option<u64>,
+    get_text: impl Fn() -> Option<String>,
+) -> Result<()>
 where
     C: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
@@ -157,8 +167,8 @@ where
         badge_net::write_frame(
             &mut stream,
             &badge_net::Update {
-                text: &format!("Hello from server {count}"),
-                freq: 1000,
+                text: get_text(),
+                freq: get_rate(),
             },
             buf.as_mut_slice(),
         )
