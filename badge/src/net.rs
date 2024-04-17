@@ -222,12 +222,11 @@ where
 {
     let mut buf = [0u8; 1024];
 
-    loop {
+    let err = loop {
         // Send a request message
         if let Err(e) = badge_net::write_frame(&mut tls, &badge_net::Request::Ready, &mut buf).await
         {
-            status(e);
-            break;
+            break e;
         }
         tls.flush().await.map_err(|_| "Failed to flush")?;
         // Get a Update message
@@ -235,13 +234,14 @@ where
             match badge_net::read_framed_value::<badge_net::Update>(&mut tls, &mut buf).await {
                 Ok(update) => update,
                 Err(e) => {
-                    status(e);
-                    break;
+                    break e;
                 }
             };
 
         status(update.text);
-    }
+    };
+
+    status(err);
 
     Ok(())
 }
