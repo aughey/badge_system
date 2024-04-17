@@ -73,17 +73,14 @@ use embedded_alloc::Heap;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
+const HEAP_SIZE: usize = 65536;
+static mut HEAP_MEM: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p: embassy_rp::Peripherals = embassy_rp::init(Default::default());
     // Initialize the allocator BEFORE you use it
-    if false {
-        use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 2048;
-        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
-    }
+    unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
 
     // // Grab our singleton objects
     // let mut pac = pac::Peripherals::take().unwrap();
@@ -244,7 +241,7 @@ async fn main(spawner: Spawner) {
 
     status("Starting net...");
 
-    crate::net::main_net(
+    match crate::net::main_net(
         crate::net::NetPins {
             PIN_23: p.PIN_23,
             PIN_25: p.PIN_25,
@@ -254,9 +251,15 @@ async fn main(spawner: Spawner) {
             DMA_CH0: p.DMA_CH0,
         },
         spawner,
-        status,
+        &mut status,
     )
-    .await;
+    .await
+    {
+        Ok(_) => status("Net done"),
+        Err(e) => status(e),
+    }
+
+    //    status("DONE");
 
     return;
 
