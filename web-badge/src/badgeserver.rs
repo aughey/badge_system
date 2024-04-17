@@ -136,8 +136,11 @@ where
     C: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
     info!("Reading from stream");
+    let mut count = 0u32;
     loop {
         let mut buf = [0u8; 1024];
+
+        count = count.wrapping_add(1);
 
         let request =
             badge_net::read_framed_value::<badge_net::Request>(&mut stream, buf.as_mut_slice())
@@ -147,10 +150,13 @@ where
             break;
         }
 
+        // sleep 3 seconds
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
         badge_net::write_frame(
             &mut stream,
             &badge_net::Update {
-                text: "Hello from server",
+                text: &format!("Hello from server {count}"),
                 freq: 123,
             },
             buf.as_mut_slice(),
