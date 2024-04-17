@@ -203,7 +203,7 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
         println!("TLS connection established!");
 
-        let tls = EmbeddedAsyncWrapper(tls);
+        let mut tls = EmbeddedAsyncWrapper(tls);
 
         loop {
             // Send a request message
