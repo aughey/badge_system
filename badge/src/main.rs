@@ -35,6 +35,7 @@ pub mod net;
 
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
+use embassy_sync::signal::Signal;
 use embedded_graphics::{
     image::Image,
     mono_font::{ascii::*, MonoTextStyle},
@@ -63,6 +64,7 @@ static mut CORE1_STACK: Stack<4096> = Stack::new();
 static EXECUTOR0: StaticCell<Executor> = StaticCell::new();
 static EXECUTOR1: StaticCell<Executor> = StaticCell::new();
 static CHANNEL: Channel<CriticalSectionRawMutex, &'static str, 3> = Channel::new();
+static LED_RATE_CHANNEL: Signal<CriticalSectionRawMutex, u64> = Signal::new();
 
 enum LedState {
     On,
@@ -241,6 +243,19 @@ async fn main(spawner: Spawner) {
 
     status("Starting net...");
 
+    let led = Output::new(p.PIN_22, Level::Low);
+    spawn_core1(
+        p.CORE1,
+        unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
+        move || {
+            let executor1 = EXECUTOR1.init(Executor::new());
+            executor1.run(|spawner| {
+                unwrap!(spawner.spawn(core1_task(led, &LED_RATE_CHANNEL)));
+                unwrap!(spawner.spawn(text_sender()));
+            });
+        },
+    );
+
     match crate::net::main_net(
         crate::net::NetPins {
             PIN_23: p.PIN_23,
@@ -252,6 +267,7 @@ async fn main(spawner: Spawner) {
         },
         spawner,
         &mut status,
+        &LED_RATE_CHANNEL,
     )
     .await
     {
@@ -264,20 +280,6 @@ async fn main(spawner: Spawner) {
     return;
 
     let up_button = Input::new(p.PIN_15, Pull::Up);
-
-    let led = Output::new(p.PIN_25, Level::Low);
-
-    spawn_core1(
-        p.CORE1,
-        unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
-        move || {
-            let executor1 = EXECUTOR1.init(Executor::new());
-            executor1.run(|spawner| {
-                unwrap!(spawner.spawn(core1_task(led)));
-                unwrap!(spawner.spawn(text_sender()));
-            });
-        },
-    );
 
     //return;
 
@@ -315,14 +317,22 @@ async fn main(spawner: Spawner) {
 }
 
 #[embassy_executor::task]
-async fn core1_task(mut led: Output<'static, embassy_rp::peripherals::PIN_25>) {
+async fn core1_task(
+    mut led: Output<'static, embassy_rp::peripherals::PIN_22>,
+    channel: &'static Signal<CriticalSectionRawMutex, u64>,
+) {
     info!("Hello from core 1");
+    let mut flash_rate = 500u64;
     loop {
         led.set_high();
-        Timer::after_millis(100).await;
+        Timer::after_millis(flash_rate).await;
 
         led.set_low();
-        Timer::after_millis(400).await;
+        Timer::after_millis(flash_rate).await;
+
+        if let Some(rate) = channel.try_take() {
+            flash_rate = rate;
+        }
     }
 }
 

@@ -14,6 +14,8 @@ use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_24, PIN_25, PIN_29, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use embedded_io_async::Write;
 use rand::SeedableRng;
@@ -64,6 +66,7 @@ pub async fn main_net(
     p: NetPins,
     spawner: Spawner,
     status: &mut impl FnMut(&str),
+    channel: &Signal<CriticalSectionRawMutex, u64>,
 ) -> Result<(), &'static str> {
     info!("Hello World!");
 
@@ -216,7 +219,7 @@ pub async fn main_net(
 
         let tls = EmbeddedAsyncWrapper(tls);
 
-        if let Err(e) = handle_connection(tls, status).await {
+        if let Err(e) = handle_connection(tls, status, channel).await {
             status(e);
         }
     }
@@ -238,7 +241,11 @@ async fn flush(io: &mut impl badge_net::AsyncWrite) -> Result<(), &'static str> 
     io.flush().await.map_err(|_| "Failed to flush")
 }
 
-async fn handle_connection<T>(mut tls: T, status: &mut impl FnMut(&str)) -> Result<(), &'static str>
+async fn handle_connection<T>(
+    mut tls: T,
+    status: &mut impl FnMut(&str),
+    channel: &Signal<CriticalSectionRawMutex, u64>,
+) -> Result<(), &'static str>
 where
     T: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
@@ -262,6 +269,8 @@ where
             Duration::from_secs(10),
         )
         .await?;
+
+        channel.signal(update.freq);
 
         status(update.text);
     }

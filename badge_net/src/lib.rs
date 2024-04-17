@@ -32,7 +32,7 @@ pub struct Update<'a> {
     /// Text to display
     pub text: &'a str,
     /// Frequency of the LED
-    pub freq: u8,
+    pub freq: u64,
 }
 impl Update<'_> {
     /// Serialize the update
