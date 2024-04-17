@@ -158,7 +158,7 @@ where
             &mut stream,
             &badge_net::Update {
                 text: &format!("Hello from server {count}"),
-                freq: 123,
+                freq: 1000,
             },
             buf.as_mut_slice(),
         )
