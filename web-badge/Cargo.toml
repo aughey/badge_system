@@ -33,6 +33,7 @@ anyhow = "1.0.82"
 tokio = { version = "1.37.0", features = ["net"], optional = true }
 tracing = { version = "0.1.40", optional = true }
 tracing-subscriber = { version = "0.3.18", optional = true }
+badge_net = { version = "0.1.0", path = "../badge_net" }
 
 [features]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]

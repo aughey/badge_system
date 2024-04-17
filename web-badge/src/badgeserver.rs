@@ -101,6 +101,8 @@ pub async fn server(args: impl IntoIterator<Item = String>) -> Result<()> {
     Ok(())
 }
 
+async fn read_request<C>(stream: C) -> Result<Request> {}
+
 async fn handle_connection<C>(stream: C) -> Result<()>
 where
     C: AsyncReadExt + AsyncWriteExt + Unpin,
