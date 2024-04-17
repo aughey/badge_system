@@ -270,9 +270,13 @@ where
         )
         .await?;
 
-        channel.signal(update.freq);
+        if let Some(freq) = update.freq {
+            channel.signal(freq);
+        }
 
-        status(update.text);
+        if let Some(text) = update.text {
+            status(text);
+        }
     }
 
     Ok(())
