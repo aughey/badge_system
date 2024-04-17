@@ -28,6 +28,11 @@ actix-web-actors = { version = "4.3.0", optional = true }
 actix = { version = "0.13.3", optional = true }
 rustls-pemfile = { version = "2.1.2", optional = true }
 rustls = { version = "0.23.4", optional = true }
+tokio-rustls = { versoin = "0.26.0", optional = true }
+anyhow = "1.0.82"
+tokio = { version = "1.37.0", features = ["net"], optional = true }
+tracing = { version = "0.1.40", optional = true }
+tracing-subscriber = { version = "0.3.18", optional = true }
 
 [features]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
@@ -40,6 +45,11 @@ ssr = [
   "dep:leptos_actix",
   "dep:rustls-pemfile",
   "dep:rustls",
+  "dep:tokio",
+  "dep:tracing",
+  "dep:tracing-subscriber",
+
+  "dep:tokio-rustls",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",

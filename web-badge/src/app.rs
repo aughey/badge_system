@@ -15,7 +15,7 @@ pub fn App() -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/web-badge.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Aughey Badge"/>
 
         // content for this welcome page
         <Router>
@@ -32,13 +32,7 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
-
     view! {
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
         <Badge/>
     }
 }
@@ -100,7 +94,7 @@ fn Badge() -> impl IntoView {
     view! {
         <div>
         <h1>"Badge"</h1>
-        <div _ref=screen_container id="custom-container">
+        <div _ref=screen_container id="custom-container" class="badge">
         </div>
         <textarea _ref=input_ref
         on:input=move |_| update_display(get_input().as_str())>

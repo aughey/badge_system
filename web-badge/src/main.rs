@@ -2,16 +2,26 @@
 mod websockets;
 
 #[cfg(feature = "ssr")]
+mod badgeserver;
+#[cfg(feature = "ssr")]
+use std::env;
+
+#[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    tracing_subscriber::fmt::init();
     use std::{fs::File, io::BufReader};
 
     use actix_files::Files;
     use actix_web::*;
-    use actix_web_actors::ws;
     use leptos::*;
     use leptos_actix::{generate_route_list, LeptosRoutes};
     use web_badge::app::*;
+
+    let args = env::args().collect::<Vec<_>>();
+    tokio::spawn(async {
+        badgeserver::server(args).await.unwrap();
+    });
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;

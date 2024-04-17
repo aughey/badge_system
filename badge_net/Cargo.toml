@@ -14,6 +14,8 @@ embedded-tls = { version = "0.17.0", default-features = false, features = [
     "webpki",
 ] }
 pem-parser = "0.1.1"
+postcard = "1.0.8"
+serde = { version = "1.0.198", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 anyhow = "1.0.82"
