@@ -19,10 +19,10 @@ impl Request {
     }
 }
 
-/// Response from the server to the badge
+/// Response from the server to the device
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Update<'a> {
-    /// Text to display on the badge
+    /// Text to display
     pub text: &'a str,
     /// Frequency of the LED
     pub freq: u8,
