@@ -89,6 +89,8 @@ pub async fn server(args: impl IntoIterator<Item = String>) -> Result<()> {
             }
         };
 
+        let mut stream = ReadWriteWrapper { inner: stream };
+
         tokio::spawn(async move {
             match handle_connection(stream).await {
                 Ok(_) => info!("Connection handled successfully"),
@@ -123,13 +125,16 @@ where
         self.inner.write_all(buf).await?;
         Ok(())
     }
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        self.inner.flush().await?;
+        Ok(())
+    }
 }
 
-async fn handle_connection<C>(stream: C) -> Result<()>
+async fn handle_connection<C>(mut stream: C) -> Result<()>
 where
-    C: AsyncReadExt + AsyncWriteExt + Unpin,
+    C: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
-    let mut stream = ReadWriteWrapper { inner: stream };
     info!("Reading from stream");
     loop {
         let mut buf = [0u8; 1024];
@@ -152,6 +157,10 @@ where
         )
         .await
         .map_err(anyhow::Error::msg)?;
+        stream
+            .flush()
+            .await
+            .map_err(|_| anyhow::anyhow!("Failed to flush"))?;
     }
 
     Ok(())

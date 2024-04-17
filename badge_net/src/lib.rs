@@ -60,7 +60,7 @@ pub trait AsyncRead {
 /// `tokio` aren't the same, so we define our framing and data sending traits here.
 #[allow(async_fn_in_trait)]
 pub trait AsyncWrite {
-    type Error;
+    type Error: core::fmt::Debug;
     async fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error>;
     async fn flush(&mut self) -> Result<(), Self::Error>;
 }
