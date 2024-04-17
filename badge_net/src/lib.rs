@@ -62,6 +62,7 @@ pub trait AsyncRead {
 pub trait AsyncWrite {
     type Error;
     async fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error>;
+    async fn flush(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Reads a frame from the stream.  

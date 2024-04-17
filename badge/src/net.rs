@@ -180,7 +180,7 @@ pub async fn main_net(
             Ok(_) => {}
             Err(e) => {
                 // sleep 3 seconds
-                status(e);
+                status("Could not connect");
                 Timer::after(Duration::from_secs(3)).await;
                 continue;
             }
@@ -229,6 +229,7 @@ where
             status(e);
             break;
         }
+        tls.flush().await.map_err(|_| "Failed to flush")?;
         // Get a Update message
         let update =
             match badge_net::read_framed_value::<badge_net::Update>(&mut tls, &mut buf).await {
@@ -263,5 +264,9 @@ where
     type Error = T::Error;
     async fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error> {
         self.0.write_all(buf).await
+    }
+
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        self.0.flush().await
     }
 }
