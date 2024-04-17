@@ -160,7 +160,6 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
     let mut rx_buffer = [0; 4096];
     let mut tx_buffer = [0; 4096];
-    let mut buf = [0; 4096];
 
     loop {
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
@@ -205,6 +204,7 @@ pub async fn main_net(p: NetPins, spawner: Spawner, mut status: impl FnMut(&str)
 
         let mut tls = EmbeddedAsyncWrapper(tls);
 
+        let mut buf = [0; 64];
         loop {
             // Send a request message
             if let Err(e) =
