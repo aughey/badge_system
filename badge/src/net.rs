@@ -3,7 +3,7 @@
 
 #![allow(async_fn_in_trait)]
 
-use core::str::from_utf8;
+use core::future::Future;
 
 use cyw43_pio::PioSpi;
 use defmt::*;
@@ -195,14 +195,20 @@ pub async fn main_net(
             unsafe { &mut WRITE_RECORD_BUFFER },
         );
 
-        tls.open(TlsContext::new(
-            &config,
-            embedded_tls::UnsecureProvider::new::<embedded_tls::Aes128GcmSha256>(
-                rand_chacha::ChaChaRng::seed_from_u64(1234),
-            ),
-        ))
-        .await
-        .map_err(|_| "Failed to setup TLS connection")?;
+        if let Err(_) = tls
+            .open(TlsContext::new(
+                &config,
+                embedded_tls::UnsecureProvider::new::<embedded_tls::Aes128GcmSha256>(
+                    rand_chacha::ChaChaRng::seed_from_u64(1234),
+                ),
+            ))
+            .await
+        {
+            status("Failed to setup TLS connection");
+            status("Could not connect");
+            Timer::after(Duration::from_secs(3)).await;
+            continue;
+        }
 
         //.map_err(|e| anyhow::anyhow!("Failed to open connection: {:?}", e))?;
 
@@ -216,34 +222,74 @@ pub async fn main_net(
     }
 }
 
+/// Will wait for a future to complete for duration time before returning an error.
+async fn wait_timeout<F, V>(fut: F, duration: Duration) -> Result<V, &'static str>
+where
+    F: Future<Output = Result<V, &'static str>>,
+{
+    let timeout = Timer::after(duration);
+    match wait_for_one_to_complete(core::pin::pin!(fut), timeout).await {
+        FirstOrSecond::First(res) => res,
+        FirstOrSecond::Second(_) => Err("Timeout"),
+    }
+}
+
+async fn flush(io: &mut impl badge_net::AsyncWrite) -> Result<(), &'static str> {
+    io.flush().await.map_err(|_| "Failed to flush")
+}
+
 async fn handle_connection<T>(mut tls: T, status: &mut impl FnMut(&str)) -> Result<(), &'static str>
 where
     T: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
     let mut buf = [0u8; 1024];
 
-    let err = loop {
+    loop {
         // Send a request message
-        if let Err(e) = badge_net::write_frame(&mut tls, &badge_net::Request::Ready, &mut buf).await
-        {
-            break e;
-        }
-        tls.flush().await.map_err(|_| "Failed to flush")?;
+        wait_timeout(
+            badge_net::write_frame(&mut tls, &badge_net::Request::Ready, &mut buf),
+            Duration::from_secs(10),
+        )
+        .await?;
+
+        wait_timeout(flush(&mut tls), Duration::from_secs(10))
+            .await
+            .map_err(|_| "Failed to flush")?;
+
         // Get a Update message
-        let update =
-            match badge_net::read_framed_value::<badge_net::Update>(&mut tls, &mut buf).await {
-                Ok(update) => update,
-                Err(e) => {
-                    break e;
-                }
-            };
+        let update = wait_timeout(
+            badge_net::read_framed_value::<badge_net::Update>(&mut tls, &mut buf),
+            Duration::from_secs(10),
+        )
+        .await?;
 
         status(update.text);
-    };
-
-    status(err);
+    }
 
     Ok(())
+}
+
+/// Return type of wait_for_one_to_complete indicating which future completed before the other.
+pub enum FirstOrSecond<A, B> {
+    First(A),
+    Second(B),
+}
+
+/// Wait for one of the two futures to complete and return which one completed first.
+/// This is a wrapper around the select function from the futures crate for the common
+/// case of returning just an output item - dropping both futures at the completion of one.
+pub async fn wait_for_one_to_complete<Fut1, Fut2, Out1, Out2>(
+    fut1: Fut1,
+    fut2: Fut2,
+) -> FirstOrSecond<Out1, Out2>
+where
+    Fut1: Future<Output = Out1> + Unpin,
+    Fut2: Future<Output = Out2> + Unpin,
+{
+    match embassy_futures::select::select(fut1, fut2).await {
+        embassy_futures::select::Either::First(value_1) => FirstOrSecond::First(value_1),
+        embassy_futures::select::Either::Second(value_2) => FirstOrSecond::Second(value_2),
+    }
 }
 
 struct EmbeddedAsyncWrapper<T>(T);
