@@ -171,17 +171,16 @@ pub async fn main_net(
     loop {
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
 
-        socket.set_timeout(Some(Duration::from_secs(10)));
+        socket.set_timeout(Some(Duration::from_secs(20)));
 
         // Get address from 192.168.86.155
         let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
 
         match socket.connect((remote_host, 4444)).await {
-            Ok(_) => {
-                status("Connected");
-            }
+            Ok(_) => {}
             Err(e) => {
                 // sleep 3 seconds
+                status(e);
                 Timer::after(Duration::from_secs(3)).await;
                 continue;
             }
