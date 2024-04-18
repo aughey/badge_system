@@ -187,8 +187,6 @@ where
             }
         };
 
-        info!("text: {text:?}, freq: {freq:?}", text = text, freq = freq);
-
         //info!("Sending badge count {count}");
         badge_net::write_frame(
             &mut stream,
