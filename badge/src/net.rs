@@ -65,12 +65,12 @@ const KEY: &str = include_str!("../../certs/client.key");
 pub async fn main_net(
     p: NetPins,
     spawner: Spawner,
-    status: &mut impl FnMut(&str),
+    badge_text: &mut impl FnMut(&str, bool),
     channel: &Signal<CriticalSectionRawMutex, u64>,
 ) -> Result<(), &'static str> {
     info!("Hello World!");
 
-    status("Starting net initialization");
+    badge_text("Starting net initialization", true);
 
     // To make flashing faster for development, you may want to flash the firmwares independently
     // at hardcoded addresses, instead of baking them into the program with `include_bytes!`:
@@ -139,12 +139,12 @@ pub async fn main_net(
 
     // Wait for DHCP, not necessary when using static IP
     info!("waiting for DHCP...");
-    status("Waiting for DHCP");
+    badge_text("Waiting for DHCP", true);
     while !stack.is_config_up() {
         Timer::after_millis(100).await;
     }
     info!("DHCP is now up!");
-    status("DHCP is now up!");
+    badge_text("DHCP is now up!", true);
 
     let ipaddr = stack
         .config_v4()
@@ -183,7 +183,7 @@ pub async fn main_net(
             Ok(_) => {}
             Err(e) => {
                 // sleep 3 seconds
-                status("Could not connect");
+                badge_text("Could not connect", true);
                 Timer::after(Duration::from_secs(3)).await;
                 continue;
             }
@@ -207,20 +207,20 @@ pub async fn main_net(
             ))
             .await
         {
-            status("Failed to setup TLS connection");
-            status("Could not connect");
+            badge_text("Failed to setup TLS connection", true);
+            badge_text("Could not connect", true);
             Timer::after(Duration::from_secs(3)).await;
             continue;
         }
 
         //.map_err(|e| anyhow::anyhow!("Failed to open connection: {:?}", e))?;
 
-        status("TLS connection established!");
+        badge_text("TLS connection established!", true);
 
         let tls = EmbeddedAsyncWrapper(tls);
 
-        if let Err(e) = handle_connection(tls, status, channel).await {
-            status(e);
+        if let Err(e) = handle_connection(tls, badge_text, channel).await {
+            badge_text(e, true);
         }
     }
 }
@@ -243,7 +243,7 @@ async fn flush(io: &mut impl badge_net::AsyncWrite) -> Result<(), &'static str> 
 
 async fn handle_connection<T>(
     mut tls: T,
-    status: &mut impl FnMut(&str),
+    badge_text: &mut impl FnMut(&str, bool),
     channel: &Signal<CriticalSectionRawMutex, u64>,
 ) -> Result<(), &'static str>
 where
@@ -275,7 +275,7 @@ where
         }
 
         if let Some(text) = update.text {
-            status(text);
+            badge_text(text, false);
         }
     }
 

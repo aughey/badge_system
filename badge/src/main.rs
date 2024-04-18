@@ -168,80 +168,92 @@ async fn main(spawner: Spawner) {
         // Reset display
         display.reset(&mut timer);
 
-        let border_stroke = PrimitiveStyleBuilder::new()
-            .stroke_color(BinaryColor::Off)
-            .stroke_width(3)
-            .stroke_alignment(StrokeAlignment::Outside)
-            .build();
-
-        // Draw a 3px wide outline around the display.
-        // _ = display
-        //     .bounding_box()
-        //     .into_styled(border_stroke)
-        //     .draw(&mut display);
-
         // Initialise display. Using the default LUT speed setting
         let _ = display.setup(&mut timer, uc8151::LUT::Internal);
 
-        // Note we're setting the Text color to `Off`. The driver is set up to treat Off as Black so that BMPs work as expected.
-        let character_style = MonoTextStyle::new(
-            &FONT_10X20,
-            // FONT_9X18_BOLD,
-            BinaryColor::Off,
-        );
-        let textbox_style = TextBoxStyleBuilder::new()
-            .height_mode(HeightMode::FitToText)
-            .alignment(HorizontalAlignment::Center)
-            .paragraph_spacing(6)
-            .build();
+        // {
+        //     let border_stroke = PrimitiveStyleBuilder::new()
+        //         .stroke_color(BinaryColor::Off)
+        //         .stroke_width(3)
+        //         .stroke_alignment(StrokeAlignment::Outside)
+        //         .build();
 
-        // Bounding box for our text. Fill it with the opposite color so we can read the text.
-        let bounds = Rectangle::new(Point::new(157, 10), Size::new(uc8151::WIDTH - 157, 0));
-        bounds
-            .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
-            .draw(&mut display)
-            .unwrap();
+        //     // Draw a 3px wide outline around the display.
+        //     // _ = display
+        //     //     .bounding_box()
+        //     //     .into_styled(border_stroke)
+        //     //     .draw(&mut display);
 
-        // Create the text box and apply styling options.
-        let text = "Embassy\nMy name is\nJohn Aughey";
-        let text_box = TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
+        //     // Note we're setting the Text color to `Off`. The driver is set up to treat Off as Black so that BMPs work as expected.
+        //     let character_style = MonoTextStyle::new(
+        //         &FONT_10X20,
+        //         // FONT_9X18_BOLD,
+        //         BinaryColor::Off,
+        //     );
+        //     let textbox_style = TextBoxStyleBuilder::new()
+        //         .height_mode(HeightMode::FitToText)
+        //         .alignment(HorizontalAlignment::Center)
+        //         .paragraph_spacing(6)
+        //         .build();
 
-        // Draw the text box.
-        text_box.draw(&mut display).unwrap();
-        text_box
-            .bounding_box()
-            .into_styled(border_stroke)
-            .draw(&mut display)
-            .unwrap();
+        //     // Bounding box for our text. Fill it with the opposite color so we can read the text.
+        //     let bounds = Rectangle::new(Point::new(157, 10), Size::new(uc8151::WIDTH - 157, 0));
+        //     bounds
+        //         .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
+        //         .draw(&mut display)
+        //         .unwrap();
 
-        // Draw ferris
-        let tga: Bmp<BinaryColor> = Bmp::from_slice(FERRIS_IMG).unwrap();
-        let image = Image::new(&tga, Point::zero());
-        let _ = image.draw(&mut display);
+        //     // Create the text box and apply styling options.
+        //     let text = "Embassy\nMy name is\nJohn Aughey";
+        //     let text_box =
+        //         TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
+
+        //     // Draw the text box.
+        //     text_box.draw(&mut display).unwrap();
+        //     text_box
+        //         .bounding_box()
+        //         .into_styled(border_stroke)
+        //         .draw(&mut display)
+        //         .unwrap();
+
+        //     // Draw ferris
+        //     let tga: Bmp<BinaryColor> = Bmp::from_slice(FERRIS_IMG).unwrap();
+        //     let image = Image::new(&tga, Point::zero());
+        //     let _ = image.draw(&mut display);
+        //     let _ = display.update();
+        // }
+
+        badge_draw::draw_display(&mut display, "Initialized").expect("drawed");
         let _ = display.update();
         display
     };
 
-    let mut status = |text: &str| {
-        display.clear(BinaryColor::On).unwrap();
-        let bounds = display.bounding_box();
-        let character_style = MonoTextStyle::new(
-            &FONT_10X20,
-            // FONT_9X18_BOLD,
-            BinaryColor::Off,
-        );
-        let textbox_style = TextBoxStyleBuilder::new()
-            .height_mode(HeightMode::FitToText)
-            .alignment(HorizontalAlignment::Center)
-            .paragraph_spacing(6)
-            .build();
-        let text_box = TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
+    let mut badge_text = move |text: &str, draw_status: bool| {
+        if draw_status {
+            display.clear(BinaryColor::On).unwrap();
+            let bounds = display.bounding_box();
+            let character_style = MonoTextStyle::new(
+                &FONT_10X20,
+                // FONT_9X18_BOLD,
+                BinaryColor::Off,
+            );
+            let textbox_style = TextBoxStyleBuilder::new()
+                .height_mode(HeightMode::FitToText)
+                .alignment(HorizontalAlignment::Center)
+                .paragraph_spacing(6)
+                .build();
+            let text_box =
+                TextBox::with_textbox_style(text, bounds, character_style, textbox_style);
 
-        text_box.draw(&mut display).unwrap();
-        display.update().unwrap();
+            text_box.draw(&mut display).unwrap();
+            display.update().unwrap();
+        } else {
+            badge_draw::draw_display(&mut display, text).expect("drawed");
+            display.update().unwrap();
+        }
     };
 
-    status("Starting net...");
+    badge_text("Starting net...", true);
 
     let led = Output::new(p.PIN_22, Level::Low);
     spawn_core1(
@@ -266,13 +278,13 @@ async fn main(spawner: Spawner) {
             DMA_CH0: p.DMA_CH0,
         },
         spawner,
-        &mut status,
+        &mut badge_text,
         &LED_RATE_CHANNEL,
     )
     .await
     {
-        Ok(_) => status("Net done"),
-        Err(e) => status(e),
+        Ok(_) => badge_text("Net done", true),
+        Err(e) => badge_text(e, true),
     }
 
     //    status("DONE");
