@@ -69,6 +69,13 @@ The expectation is that during the presentation, a QR code will be presented to 
     - Encryption using TLS13_AES_256_GCM_SHA384, TLS13_AES_128_GCM_SHA256, or TLS13_CHACHA20_POLY1305_SHA256,
     - Web server TLS secure through nginx reverse proxy
 
+# Constraints
+
+- no_std environment
+- constrainted stack size on rp2040 (2k)
+- Allocation strategy on embedded
+- Pulling as much dev out of embedded as possible
+
 # Dev Run Notes
 
 ```
