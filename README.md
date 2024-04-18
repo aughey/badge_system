@@ -26,7 +26,7 @@
 
 
 - Development experience
-    - Project Management (design practices, gate reviews, design-code-test cycles, documentation, requirements definition)
+    - Project Management (design practices, PRO, gate reviews, design-code-test cycles, documentation, requirements definition)
     - People Management (version one, standups, code reviews, design reviews)
     - Development environment (IDE, dev-containers, testing env, build environment)
     - Development experience (workflow, build-test cycle, unit interaction, emulation)
