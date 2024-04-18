@@ -33,45 +33,26 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    let options = [50, 100, 250, 500, 1000];
-    let selected = 100;
-    let (value, set_value) = create_signal(selected.to_string());
-
-    create_effect(move |_| {
-        let value = value().parse().unwrap();
-        spawn_local(async move {
-            update_frequency(value).await.unwrap();
-            ()
-        });
-    });
-
-    let option_view = options.iter().map(|v| {
-        let v = v.to_string();
-        view! {
-            <option selected=if v == value.get() { "selected" } else { "" }>
-                {v}
-            </option>
-        }
-    });
+    // create_effect(move |_| {
+    //     let value = value().parse().unwrap();
+    //     spawn_local(async move {
+    //         update_frequency(value).await.unwrap();
+    //         ()
+    //     });
+    // });
 
     view! {
         <Badge/>
-         <select on:change=move |ev| {
-        let new_value = event_target_value(&ev);
-        set_value(new_value);
-    }>
-        {options.into_iter().map(|v| v.to_string()).map(|v| view! {
-            <option selected=if v == value() { "selected" } else { "" }>
-                {v}
-            </option>
-        }).collect_view()}
-    </select>
     }
 }
 
 #[component]
 fn Badge() -> impl IntoView {
     let screen_container = create_node_ref::<leptos::html::Div>();
+
+    let options = [50, 100, 250, 500, 1000];
+    let selected = 100;
+    let (value, set_value) = create_signal(selected.to_string());
 
     let display = Rc::new(RefCell::new(None));
 
@@ -88,8 +69,10 @@ fn Badge() -> impl IntoView {
 
     let send_text = move || {
         let text = get_input();
+        let freq = value().parse().unwrap();
         spawn_local(async move {
             update_text(text).await.unwrap();
+            update_frequency(freq).await.unwrap();
             ()
         });
     };
@@ -139,7 +122,19 @@ fn Badge() -> impl IntoView {
         on:input=move |_| update_display(get_input().as_str())>
         {INITIAL_TEXT}
         </textarea>
-        <button on:click=move |_| send_text()>Update Text On Badge</button>
+        <div>LED Flash Rate (ms)
+         <select on:change=move |ev| {
+        let new_value = event_target_value(&ev);
+        set_value(new_value);
+    }>
+        {options.into_iter().map(|v| v.to_string()).map(|v| view! {
+            <option selected=if v == value() { "selected" } else { "" }>
+                {v}
+            </option>
+        }).collect_view()}
+    </select>
+    </div>
+        <button on:click=move |_| send_text()>Send this state to Badge</button>
         </div>
     }
 }
