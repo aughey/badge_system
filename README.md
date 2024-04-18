@@ -60,7 +60,6 @@ The purpose of this is to showcase/demonstrate Rust running on multiple devices 
     - TLS 1.3 communication between badge and server
     - Badge authentication/revocation through Pki certificates
     - Encryption using TLS13_AES_256_GCM_SHA384, TLS13_AES_128_GCM_SHA256, or TLS13_CHACHA20_POLY1305_SHA256,
-    - 
 
 
 ```
