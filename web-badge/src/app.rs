@@ -51,7 +51,7 @@ fn Badge() -> impl IntoView {
     let screen_container = create_node_ref::<leptos::html::Div>();
 
     let options = [50, 100, 250, 500, 1000];
-    let selected = 100;
+    let selected = 1000;
     let (value, set_value) = create_signal(selected.to_string());
 
     let display = Rc::new(RefCell::new(None));
@@ -90,7 +90,7 @@ fn Badge() -> impl IntoView {
             const HEIGHT: u32 = 128;
             let output_settings = OutputSettingsBuilder::new()
                 .scale(1)
-                .pixel_spacing(1)
+                .pixel_spacing(0)
                 .build();
             let mut text_display =
                 WebSimulatorDisplay::new((WIDTH, HEIGHT), &output_settings, Some(&sc));
