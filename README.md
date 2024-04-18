@@ -1,11 +1,27 @@
 # badge_system
 
+# Aside
+
+- Development experience
+    - Project Management (design practices, gate reviews, design-code-test cycles, documentation, requirements definition)
+    - People Management (version one, standups, code reviews, design reviews)
+    - Development environment (IDE, dev-containers, testing env, build environment)
+    - Development experience (workflow, build-test cycle, unit interaction, emulation)
+    - Development Education (awareness of patterns, ability to leverage language capabilities)
+    - Development Translation (lossly related to architecture design, less "what classes needed" more "what concepts will be most beneficial to the developer")
+    - Coding conceptual abstractions (architecture, async/sync, language abstractions, language enforcement/constraints)
+    - Artifact distribution (customer interaction, deployment mechanisms)
+    - Execution Environments (operating environments)
+
 # Capabilities
 
 Two visible components, 
 
 - a physical badge in the form of a Badger 2040W.
 - a publicly accessible web page
+
+![badge](badge.jpg)
+![web](web.png)
 
 ## General functionality
 
@@ -27,18 +43,9 @@ Two visible components,
 
 The purpose of this is to showcase/demonstrate Rust running on multiple devices with a 100% rust codebase.  This will show rust running in a bare-metal no_std embedded configuration, a fully Linux hosted web server, and wasm on a web browser.  Additionally, a wide range of technologies will be utilitized such as encryption/authenticaion with TLS.
 
+The expectation is that during the presentation, a QR code will be presented to direct attendees to a web site.  The web site will be the web interface, allowing them to make modifications to the badge I am wearing.  Changes will be sent to the badge in real-time, and the changes visible from the stage.  This will happen asynchronous to the presentation.  During the presentation, the capabilities being shown will be revealed - relevant to the content of the presentation.  For example, the presentation on multicore will highlight the fact that multiple cores are being used both on the server and embedded along with async development experience.
+
 ## Features
-
-(aside)
-
-- Development experience
-    - Project Management (design practices, gate reviews, design-code-test cycles, documentation, requirements definition)
-    - People Management (version one, standups, code reviews, design reviews)
-    - Development environment (IDE, dev-containers, testing env, build environment)
-    - Development experience (workflow, build-test cycle, unit interaction, emulation)
-    - Coding conceptual abstractions (architecture, async/sync, language abstractions, language enforcement/constraints)
-    - Artifact distribution (customer interaction, deployment mechanisms)
-    - Execution Environments (operating environments)
 
 - Bare-metal environment
      - RP2040W microcontroller
@@ -60,7 +67,9 @@ The purpose of this is to showcase/demonstrate Rust running on multiple devices 
     - TLS 1.3 communication between badge and server
     - Badge authentication/revocation through Pki certificates
     - Encryption using TLS13_AES_256_GCM_SHA384, TLS13_AES_128_GCM_SHA256, or TLS13_CHACHA20_POLY1305_SHA256,
+    - Web server TLS secure through nginx reverse proxy
 
+# Dev Run Notes
 
 ```
 vscode ➜ /workspaces/badge_system (main) $ cargo run --release --package run-wasm -- --package basic_example

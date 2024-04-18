@@ -249,7 +249,9 @@ async fn handle_connection<T>(
 where
     T: badge_net::AsyncRead + badge_net::AsyncWrite + Unpin,
 {
-    let mut buf = [0u8; 1024];
+    let mut buf = [0u8; 256];
+
+    let mut last_text = None;
 
     loop {
         // Send a request message
@@ -274,8 +276,12 @@ where
             channel.signal(freq);
         }
 
-        if let Some(text) = update.text {
-            badge_text(text, false);
+        // Guard against spamming the badge with the same text
+        if last_text != update.text {
+            last_text = update.text.to_owned();
+            if let Some(text) = update.text {
+                badge_text(text, false);
+            }
         }
     }
 

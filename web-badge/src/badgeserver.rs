@@ -148,7 +148,7 @@ where
     info!("Reading from stream");
     let mut count = 0u32;
     loop {
-        let mut buf = [0u8; 1024];
+        let mut buf = [0u8; 256];
 
         count = count.wrapping_add(1);
 
