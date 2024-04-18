@@ -189,6 +189,20 @@ mod tests {
     }
 
     #[test]
+    fn test_empty_update() {
+        let mut buf = [0u8; 64];
+        let msg = Update {
+            text: None,
+            freq: None,
+        };
+        let buf = postcard::to_slice(&msg, &mut buf).unwrap();
+        assert!(buf.len() > 0);
+
+        let update: Update = postcard::from_bytes(buf).unwrap();
+        assert_eq!(update, msg);
+    }
+
+    #[test]
     fn test_self_serialize() {
         let req = Request::Ready;
         let buf = req.serialize();

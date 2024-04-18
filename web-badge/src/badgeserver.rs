@@ -161,13 +161,13 @@ where
         }
 
         // sleep 3 seconds
-        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
-        info!("Sending badge count {count}");
+        //info!("Sending badge count {count}");
         badge_net::write_frame(
             &mut stream,
             &badge_net::Update {
-                text: get_text(),
+                text: get_text().as_ref().map(|x| x.as_str()),
                 freq: get_rate(),
             },
             buf.as_mut_slice(),

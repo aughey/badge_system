@@ -75,6 +75,25 @@ fn Badge() -> impl IntoView {
 
     let display = Rc::new(RefCell::new(None));
 
+    let input_ref = create_node_ref::<leptos::html::Textarea>();
+    let get_input = {
+        let input_ref = input_ref.clone();
+        move || {
+            input_ref
+                .get()
+                .map(|v| v.value())
+                .unwrap_or_else(|| "".to_string())
+        }
+    };
+
+    let send_text = move || {
+        let text = get_input();
+        spawn_local(async move {
+            update_text(text).await.unwrap();
+            ()
+        });
+    };
+
     const INITIAL_TEXT: &str = "Enter Text Here";
     {
         let display = display.clone();
@@ -111,18 +130,6 @@ fn Badge() -> impl IntoView {
         }
     };
 
-    let input_ref = create_node_ref::<leptos::html::Textarea>();
-
-    let get_input = {
-        let input_ref = input_ref.clone();
-        move || {
-            input_ref
-                .get()
-                .map(|v| v.value())
-                .unwrap_or_else(|| "".to_string())
-        }
-    };
-
     view! {
         <div>
         <h1>"Badge"</h1>
@@ -132,6 +139,7 @@ fn Badge() -> impl IntoView {
         on:input=move |_| update_display(get_input().as_str())>
         {INITIAL_TEXT}
         </textarea>
+        <button on:click=move |_| send_text()>Update Text On Badge</button>
         </div>
     }
 }
@@ -164,4 +172,12 @@ async fn update_frequency(freq: u64) -> Result<String, ServerFnError> {
     info!("Updating frequency to {freq}");
     crate::badge_channels::set_frequency(freq);
     Ok(format!("Updated frequency to {freq}"))
+}
+
+#[server(UpdateText, "/updatetext")]
+async fn update_text(text: String) -> Result<String, ServerFnError> {
+    use tracing::info;
+    info!("Updating text to {text}");
+    crate::badge_channels::set_text(text.clone());
+    Ok(format!("Updated text to {text}"))
 }
