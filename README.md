@@ -2,11 +2,35 @@
 
 # Aside
 
+- Prototype phase
+    - Can it do whatever
+    - understanding hardware
+    - understanding software
+    - trying to get some implementation of kind of the expected operating capability
+    - Doing whatever it takes.
+
+- Badge
+    - basic rust flash led
+    - talk to display
+    - talk to wifi
+    - How to use embedded graphics crate
+    - how to setup toolchains for embedded/wasm
+
+- web
+    - leptos Basic project
+    - embedded graphics in a browser
+
+- certs
+    - How do we create self-signed certificates
+    - Testing with openssl s_client and s_server
+
+
 - Development experience
     - Project Management (design practices, gate reviews, design-code-test cycles, documentation, requirements definition)
     - People Management (version one, standups, code reviews, design reviews)
     - Development environment (IDE, dev-containers, testing env, build environment)
     - Development experience (workflow, build-test cycle, unit interaction, emulation)
+    - Development Prototype (fast dev env standup/teardown)
     - Development Education (awareness of patterns, ability to leverage language capabilities)
     - Development Translation (lossly related to architecture design, less "what classes needed" more "what concepts will be most beneficial to the developer")
     - Coding conceptual abstractions (architecture, async/sync, language abstractions, language enforcement/constraints)
