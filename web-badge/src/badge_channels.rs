@@ -9,7 +9,7 @@ pub fn set_frequency(freq: u64) {
 }
 
 pub fn get_frequency() -> Option<u64> {
-    UPDATE_FREQ.lock().unwrap().take()
+    UPDATE_FREQ.lock().unwrap().clone()
 }
 
 pub fn set_text(text: String) {
@@ -17,5 +17,5 @@ pub fn set_text(text: String) {
 }
 
 pub fn get_text() -> Option<String> {
-    TEXT.lock().unwrap().take()
+    TEXT.lock().unwrap().clone()
 }

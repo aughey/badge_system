@@ -147,6 +147,10 @@ where
 {
     info!("Reading from stream");
     let mut count = 0u32;
+
+    let mut last_text = None;
+    let mut last_freq = None;
+
     loop {
         let mut buf = [0u8; 256];
 
@@ -163,12 +167,34 @@ where
         // sleep 3 seconds
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
+        let text = {
+            let thistext = get_text();
+            if last_text != thistext {
+                last_text = thistext.clone();
+                thistext
+            } else {
+                None
+            }
+        };
+
+        let freq = {
+            let thisfreq = get_rate();
+            if last_freq != thisfreq {
+                last_freq = thisfreq.clone();
+                thisfreq
+            } else {
+                None
+            }
+        };
+
+        info!("text: {text:?}, freq: {freq:?}", text = text, freq = freq);
+
         //info!("Sending badge count {count}");
         badge_net::write_frame(
             &mut stream,
             &badge_net::Update {
-                text: get_text().as_ref().map(|x| x.as_str()),
-                freq: get_rate(),
+                text: text.as_ref().map(|x| x.as_str()),
+                freq: freq,
             },
             buf.as_mut_slice(),
         )
