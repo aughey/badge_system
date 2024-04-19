@@ -343,7 +343,7 @@ async fn core1_task(
         Timer::after_millis(flash_rate).await;
 
         if let Some(rate) = channel.try_take() {
-            flash_rate = rate;
+            flash_rate = rate.clamp(50, 2000);
         }
     }
 }
