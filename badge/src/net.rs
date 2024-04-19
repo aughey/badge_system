@@ -3,6 +3,7 @@
 
 #![allow(async_fn_in_trait)]
 
+extern crate alloc;
 use core::future::Future;
 
 use cyw43_pio::PioSpi;
@@ -189,13 +190,20 @@ pub async fn main_net(
             }
         }
 
-        static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
-        static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        let mut read_buffer = alloc::vec::Vec::new();
+        let mut write_buffer = alloc::vec::Vec::new();
+        read_buffer.resize(16384, 0u8);
+        write_buffer.resize(16384, 0u8);
+
+        //static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        //static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
         let mut tls = TlsConnection::new(
             socket,
             //embedded_io_adapters::std::FromStd::new(client),
-            unsafe { &mut READ_RECORD_BUFFER },
-            unsafe { &mut WRITE_RECORD_BUFFER },
+            // unsafe { &mut READ_RECORD_BUFFER },
+            // unsafe { &mut WRITE_RECORD_BUFFER },
+            &mut read_buffer,
+            &mut write_buffer,
         );
 
         if let Err(_) = tls
