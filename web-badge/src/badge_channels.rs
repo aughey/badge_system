@@ -12,7 +12,8 @@ pub fn get_frequency() -> Option<u64> {
     UPDATE_FREQ.lock().unwrap().clone()
 }
 
-pub fn set_text(text: String) {
+pub fn set_text(text: impl AsRef<str>) {
+    let text = crate::format_text_for_badge(text);
     TEXT.lock().unwrap().replace(text);
 }
 

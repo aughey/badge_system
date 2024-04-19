@@ -5,6 +5,8 @@ use leptos_meta::*;
 use leptos_router::*;
 use web_sys::console::log;
 
+use crate::format_text_for_badge;
+
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
@@ -53,6 +55,7 @@ fn Badge() -> impl IntoView {
     let options = [50, 100, 250, 500, 1000];
     let selected = 1000;
     let (value, set_value) = create_signal(selected.to_string());
+    let (messages, set_messages) = create_signal(Vec::new());
 
     let display = Rc::new(RefCell::new(None));
 
@@ -71,8 +74,12 @@ fn Badge() -> impl IntoView {
         let text = get_input();
         let freq = value().parse().unwrap();
         spawn_local(async move {
-            update_text(text).await.unwrap();
+            update_text(text.clone()).await.unwrap();
             update_frequency(freq).await.unwrap();
+            set_messages.update(|m| {
+                m.push(format!("Sent text to the server: {}", text));
+                m.push(format!("Sent frequency to the server: {}", freq));
+            });
             ()
         });
     };
@@ -103,11 +110,12 @@ fn Badge() -> impl IntoView {
         });
     }
 
+    const TEXT_LIMIT: usize = 13 * 5;
     let update_display = move |text: &str| {
         //        let text = text.get();
         // strip any non-ascii characters
-        let text = text.chars().filter(|c| c.is_ascii()).collect::<String>();
         if let Some(display) = display.borrow_mut().as_mut() {
+            let text = format_text_for_badge(text);
             badge_draw::draw_display(display, text.as_str()).expect("could not draw text");
             display.flush().expect("could not flush buffer");
         }
@@ -127,7 +135,7 @@ fn Badge() -> impl IntoView {
         let new_value = event_target_value(&ev);
         set_value(new_value);
     }>
-        {options.into_iter().map(|v| v.to_string()).map(|v| view! {
+        {move || options.into_iter().map(|v| v.to_string()).map(|v| view! {
             <option selected=if v == value() { "selected" } else { "" }>
                 {v}
             </option>
@@ -135,7 +143,15 @@ fn Badge() -> impl IntoView {
     </select>
     </div>
         <button on:click=move |_| send_text()>Send this state to Badge</button>
+        <div>
+        Only the most recent message is displayed on the badge.
         </div>
+        </div>
+        <ul>
+        {move || messages().iter().map(|m| view! {
+            <li>{m}</li>
+        }).collect_view()}
+        </ul>
     }
 }
 
@@ -173,6 +189,6 @@ async fn update_frequency(freq: u64) -> Result<String, ServerFnError> {
 async fn update_text(text: String) -> Result<String, ServerFnError> {
     use tracing::info;
     info!("Updating text to {text}");
-    crate::badge_channels::set_text(text.clone());
+    crate::badge_channels::set_text(&text);
     Ok(format!("Updated text to {text}"))
 }
