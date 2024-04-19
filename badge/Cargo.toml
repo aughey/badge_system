@@ -29,7 +29,7 @@ portable-atomic = { version = "1.5", features = ["critical-section"] }
 uc8151 = "0.2.0"
 cyw43-pio = "0.1.0"
 cyw43 = "0.1.0"
-embassy-net = { version = "0.4.0", features = ["dhcpv4", "tcp", "medium-ethernet", "udp"] }
+embassy-net = { version = "0.4.0", features = ["dhcpv4", "tcp", "medium-ethernet"] }
 embedded-io-async = "0.6.1"
 format_no_std = "1.1.0"
 pem = { version = "3.0.4", default-features = false }
