@@ -31,11 +31,11 @@ FROM rustlang/rust:nightly-alpine as runner
 WORKDIR /app
 
 
-COPY --from=builder /work/web-badge/target/release/leptos_start /app/
+COPY --from=builder /work/web-badge/target/release/web-badge /app/
 COPY --from=builder /work/web-badge/target/site /app/site
 COPY --from=builder /work/web-badge/Cargo.toml /app/
 
 EXPOSE $PORT
 ENV LEPTOS_SITE_ROOT=./site
 
-CMD ["/app/leptos_start"]
+CMD ["/app/web-badge"]
