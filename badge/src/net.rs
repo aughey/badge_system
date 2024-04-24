@@ -9,7 +9,6 @@ use core::future::Future;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_net::dns::DnsQueryType;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config, Stack, StackResources};
 use embassy_rp::bind_interrupts;
@@ -183,6 +182,7 @@ pub async fn main_net(
         // Get address from 192.168.86.155
         let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
         // badge_text("Resolving DNS", true);
+        //use embassy_net::dns::DnsQueryType;
         // let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
         //     Ok(addrs) => {
         //         if let Some(addr) = addrs.first() {
