@@ -118,6 +118,10 @@ vscode ➜ /workspaces/badge_system/web-badge (main) $ cargo leptos watch -- cer
 PS C:\jha\socat-1.7.3.2-1-x86_64> ./socat.exe TCP4-LISTEN:4444,fork,reuseaddr TCP4:127.0.0.1:4443
 ```
 
+# nginx
+
+https://nginx.org/en/docs/stream/ngx_stream_ssl_module.html
+
 # Setting up aws
 
 ```
