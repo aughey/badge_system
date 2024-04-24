@@ -182,24 +182,24 @@ pub async fn main_net(
         // Get address from 192.168.86.155
         let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
         // badge_text("Resolving DNS", true);
-        use embassy_net::dns::DnsQueryType;
-        let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
-            Ok(addrs) => {
-                if let Some(addr) = addrs.first() {
-                    *addr
-                } else {
-                    badge_text("DNS query failed", true);
-                    Timer::after(Duration::from_secs(3)).await;
-                    continue;
-                }
-            }
-            Err(e) => {
-                badge_text("DNS query failed", true);
-                Timer::after(Duration::from_secs(3)).await;
-                continue;
-            }
-        };
-        badge_text("Got DNS response", true);
+        // use embassy_net::dns::DnsQueryType;
+        // let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
+        //     Ok(addrs) => {
+        //         if let Some(addr) = addrs.first() {
+        //             *addr
+        //         } else {
+        //             badge_text("DNS query failed", true);
+        //             Timer::after(Duration::from_secs(3)).await;
+        //             continue;
+        //         }
+        //     }
+        //     Err(e) => {
+        //         badge_text("DNS query failed", true);
+        //         Timer::after(Duration::from_secs(3)).await;
+        //         continue;
+        //     }
+        // };
+        // badge_text("Got DNS response", true);
 
         badge_text("creating socket", true);
         static mut SOCKET_RX: [u8; 4096] = [0u8; 4096];
