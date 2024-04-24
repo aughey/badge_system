@@ -147,6 +147,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 ```
+docker build -t aughey/webbadge:latest .
+
 docker run -p 3000:3000 --rm -it aughey/webbadge:latest
 ```
 

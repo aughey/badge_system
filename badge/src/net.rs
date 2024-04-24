@@ -18,7 +18,6 @@ use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
-use embedded_io_async::Write;
 use rand::SeedableRng;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
@@ -26,9 +25,6 @@ use {defmt_rtt as _, panic_probe as _};
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
 });
-
-const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
-const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
 
 #[embassy_executor::task]
 async fn wifi_task(
@@ -69,8 +65,6 @@ pub async fn main_net(
     badge_text: &mut impl FnMut(&str, bool),
     channel: &Signal<CriticalSectionRawMutex, u64>,
 ) -> Result<(), &'static str> {
-    info!("Hello World!");
-
     badge_text("Starting net initialization", true);
 
     // To make flashing faster for development, you may want to flash the firmwares independently
@@ -129,7 +123,20 @@ pub async fn main_net(
 
     //    status("Joining wpa2");
     loop {
+        const PHONE_WIFI_NETWORK: &str = include_str!("../phone_wifi.network.txt");
+        const PHONE_WIFI_PASSWORD: &str = include_str!("../phone_wifi.password.txt");
+        match control
+            .join_wpa2(PHONE_WIFI_NETWORK, PHONE_WIFI_PASSWORD)
+            .await
+        {
+            Ok(_) => break,
+            Err(err) => {
+                info!("join failed with status={}", err.status);
+            }
+        }
         //control.join_open(WIFI_NETWORK).await;
+        const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
+        const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
         match control.join_wpa2(WIFI_NETWORK, WIFI_PASSWORD).await {
             Ok(_) => break,
             Err(err) => {
@@ -202,13 +209,11 @@ pub async fn main_net(
         // };
         // badge_text("Got DNS response", true);
 
-        badge_text("creating socket", true);
         static mut SOCKET_RX: [u8; 4096] = [0u8; 4096];
         static mut SOCKET_TX: [u8; 4096] = [0u8; 4096];
         let rx_buffer = unsafe { &mut SOCKET_RX };
         let tx_buffer = unsafe { &mut SOCKET_TX };
         let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
-        badge_text("created socket", true);
 
         socket.set_timeout(Some(Duration::from_secs(20)));
 
