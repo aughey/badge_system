@@ -170,16 +170,20 @@ pub async fn main_net(
 
     // And now we can use it!
 
-    badge_text("allocating connection buffers", true);
-    let mut rx_buffer = alloc::vec::Vec::new();
-    let mut tx_buffer = alloc::vec::Vec::new();
-    rx_buffer.resize(4096, 0u8);
-    tx_buffer.resize(4096, 0u8);
-    badge_text("starting main loop", true);
+    // badge_text("allocating connection buffers", true);
+    // let mut rx_buffer = alloc::vec::Vec::new();
+    // let mut tx_buffer = alloc::vec::Vec::new();
+    // rx_buffer.resize(4096, 0u8);
+    // tx_buffer.resize(4096, 0u8);
+    // badge_text("starting main loop", true);
 
     loop {
         badge_text("creating socket", true);
-        let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
+        static mut SOCKET_RX: [u8; 16384] = [0u8; 16384];
+        static mut SOCKET_TX: [u8; 16384] = [0u8; 16384];
+        let rx_buffer = unsafe { &mut SOCKET_RX };
+        let tx_buffer = unsafe { &mut SOCKET_TX };
+        let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
         badge_text("created socket", true);
 
         socket.set_timeout(Some(Duration::from_secs(20)));
@@ -218,20 +222,20 @@ pub async fn main_net(
             }
         }
 
-        let mut read_buffer = alloc::vec::Vec::new();
-        let mut write_buffer = alloc::vec::Vec::new();
-        read_buffer.resize(16384, 0u8);
-        write_buffer.resize(16384, 0u8);
+        // let mut read_buffer = alloc::vec::Vec::new();
+        // let mut write_buffer = alloc::vec::Vec::new();
+        // read_buffer.resize(16384, 0u8);
+        // write_buffer.resize(16384, 0u8);
 
-        //static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
-        //static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
         let mut tls = TlsConnection::new(
             socket,
             //embedded_io_adapters::std::FromStd::new(client),
-            // unsafe { &mut READ_RECORD_BUFFER },
-            // unsafe { &mut WRITE_RECORD_BUFFER },
-            &mut read_buffer,
-            &mut write_buffer,
+            unsafe { &mut READ_RECORD_BUFFER },
+            unsafe { &mut WRITE_RECORD_BUFFER },
+            // &mut read_buffer,
+            // &mut write_buffer,
         );
 
         if let Err(_) = tls
