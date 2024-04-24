@@ -24,7 +24,7 @@ RUN cargo leptos build --release -vv
 
 RUN ls -l /work/web-badge
 RUN ls -l /work
-RUN find /work/web-badge/target --print
+RUN find /work/web-badge/target -print
 
 FROM rustlang/rust:nightly-alpine as runner
 
