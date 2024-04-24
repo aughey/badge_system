@@ -170,10 +170,12 @@ pub async fn main_net(
 
     // And now we can use it!
 
+    badge_text("allocating connection buffers", true);
     let mut rx_buffer = alloc::vec::Vec::new();
     let mut tx_buffer = alloc::vec::Vec::new();
     rx_buffer.resize(4096, 0u8);
     tx_buffer.resize(4096, 0u8);
+    badge_text("starting main loop", true);
 
     loop {
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
