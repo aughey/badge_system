@@ -117,3 +117,24 @@ vscode ➜ /workspaces/badge_system/web-badge (main) $ cargo leptos watch -- cer
 ```
 PS C:\jha\socat-1.7.3.2-1-x86_64> ./socat.exe TCP4-LISTEN:4444,fork,reuseaddr TCP4:127.0.0.1:4443
 ```
+
+# Setting up aws
+
+```
+sudo yum update -y
+sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+```
+
+# Setting up letsencrypt
+
+```
+mkdir -p letsencrypt/etc
+mkdir -p letsencrypt/var
+docker run -it --rm --name certbot \
+            -p 80:80 -p 443:443 \
+            -v "$HOME/letsencrypt/etc:/etc/letsencrypt" \
+            -v "$HOME/letsencrypt/var:/var/lib/letsencrypt" \
+            certbot/certbot certonly
+```
