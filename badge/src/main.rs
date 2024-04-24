@@ -75,7 +75,7 @@ use embedded_alloc::Heap;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
-const HEAP_SIZE: usize = 65536 * 2;
+const HEAP_SIZE: usize = 65536;
 static mut HEAP_MEM: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 #[embassy_executor::main]
