@@ -26,8 +26,8 @@ FROM rustlang/rust:nightly-alpine as runner
 
 WORKDIR /app
 
-RUN ls -l /work
 RUN ls -l /work/web-badge
+RUN ls -l /work
 
 COPY --from=builder /work/web-badge/target/release/leptos_start /app/
 COPY --from=builder /work/web-badge/target/site /app/site
