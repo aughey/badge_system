@@ -142,3 +142,7 @@ docker run -it --rm --name certbot \
             -v "$HOME/letsencrypt/var:/var/lib/letsencrypt" \
             certbot/certbot certonly
 ```
+
+```
+docker run -p 3000:3000 --rm -it aughey/webbadge:latest
+```
