@@ -178,16 +178,6 @@ pub async fn main_net(
     // badge_text("starting main loop", true);
 
     loop {
-        badge_text("creating socket", true);
-        static mut SOCKET_RX: [u8; 16384] = [0u8; 16384];
-        static mut SOCKET_TX: [u8; 16384] = [0u8; 16384];
-        let rx_buffer = unsafe { &mut SOCKET_RX };
-        let tx_buffer = unsafe { &mut SOCKET_TX };
-        let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
-        badge_text("created socket", true);
-
-        socket.set_timeout(Some(Duration::from_secs(20)));
-
         const SERVER: &str = "dev.aughey.com";
         // Get address for dev.aughey.com through configured DNS
         badge_text("Resolving DNS", true);
@@ -208,6 +198,16 @@ pub async fn main_net(
             }
         };
         badge_text("Got DNS response", true);
+
+        badge_text("creating socket", true);
+        static mut SOCKET_RX: [u8; 16384] = [0u8; 16384];
+        static mut SOCKET_TX: [u8; 16384] = [0u8; 16384];
+        let rx_buffer = unsafe { &mut SOCKET_RX };
+        let tx_buffer = unsafe { &mut SOCKET_TX };
+        let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
+        badge_text("created socket", true);
+
+        socket.set_timeout(Some(Duration::from_secs(20)));
 
         // Get address from 192.168.86.155
         // let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
