@@ -212,7 +212,7 @@ pub async fn main_net(
 
         socket.set_timeout(Some(Duration::from_secs(20)));
 
-        match socket.connect((remote_host, 4444)).await {
+        match socket.connect((remote_host, 12345)).await {
             Ok(_) => {}
             Err(e) => {
                 // sleep 3 seconds
