@@ -12,9 +12,9 @@ RUN curl --proto '=https' --tlsv1.2 -LsSf https://github.com/leptos-rs/cargo-lep
 RUN rustup target add wasm32-unknown-unknown
 
 WORKDIR /work
-COPY web-badge .
-COPY badge_net .
-COPY badge_draw .
+COPY web-badge/ /work/web-badge
+COPY badge_net/ /work/badge_net
+COPY badge_draw/ /work/badge_draw
 
 RUN ls -al /work
 
