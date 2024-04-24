@@ -9,6 +9,7 @@ use core::future::Future;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
+use embassy_net::dns::DnsQueryType;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config, Stack, StackResources};
 use embassy_rp::bind_interrupts;
@@ -179,8 +180,27 @@ pub async fn main_net(
 
         socket.set_timeout(Some(Duration::from_secs(20)));
 
+        const SERVER: &str = "dev.aughey.com";
+        // Get address for dev.aughey.com through configured DNS
+        let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
+            Ok(addrs) => {
+                if let Some(addr) = addrs.first() {
+                    *addr
+                } else {
+                    badge_text("DNS query failed", true);
+                    Timer::after(Duration::from_secs(3)).await;
+                    continue;
+                }
+            }
+            Err(e) => {
+                badge_text("DNS query failed", true);
+                Timer::after(Duration::from_secs(3)).await;
+                continue;
+            }
+        };
+
         // Get address from 192.168.86.155
-        let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
+        // let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
 
         match socket.connect((remote_host, 4444)).await {
             Ok(_) => {}
