@@ -37,5 +37,6 @@ COPY --from=builder /work/web-badge/Cargo.toml /app/
 
 EXPOSE $PORT
 ENV LEPTOS_SITE_ROOT=./site
+ENV LEPTOS_SITE_ADDR="0.0.0.0:3000"
 
 CMD ["/app/web-badge"]
