@@ -141,8 +141,13 @@ docker run -it --rm --name certbot \
             -v "$HOME/letsencrypt/etc:/etc/letsencrypt" \
             -v "$HOME/letsencrypt/var:/var/lib/letsencrypt" \
             certbot/certbot certonly
+
+sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 ```
 docker run -p 3000:3000 --rm -it aughey/webbadge:latest
 ```
+
+https://docs.pingidentity.com/r/en-us/solution-guides/htg_use_openssl_to_test_ssl_connectivity
