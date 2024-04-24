@@ -180,24 +180,26 @@ pub async fn main_net(
     loop {
         const SERVER: &str = "dev.aughey.com";
         // Get address for dev.aughey.com through configured DNS
-        badge_text("Resolving DNS", true);
-        let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
-            Ok(addrs) => {
-                if let Some(addr) = addrs.first() {
-                    *addr
-                } else {
-                    badge_text("DNS query failed", true);
-                    Timer::after(Duration::from_secs(3)).await;
-                    continue;
-                }
-            }
-            Err(e) => {
-                badge_text("DNS query failed", true);
-                Timer::after(Duration::from_secs(3)).await;
-                continue;
-            }
-        };
-        badge_text("Got DNS response", true);
+        // Get address from 192.168.86.155
+        let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
+        // badge_text("Resolving DNS", true);
+        // let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
+        //     Ok(addrs) => {
+        //         if let Some(addr) = addrs.first() {
+        //             *addr
+        //         } else {
+        //             badge_text("DNS query failed", true);
+        //             Timer::after(Duration::from_secs(3)).await;
+        //             continue;
+        //         }
+        //     }
+        //     Err(e) => {
+        //         badge_text("DNS query failed", true);
+        //         Timer::after(Duration::from_secs(3)).await;
+        //         continue;
+        //     }
+        // };
+        // badge_text("Got DNS response", true);
 
         badge_text("creating socket", true);
         static mut SOCKET_RX: [u8; 4096] = [0u8; 4096];
@@ -208,9 +210,6 @@ pub async fn main_net(
         badge_text("created socket", true);
 
         socket.set_timeout(Some(Duration::from_secs(20)));
-
-        // Get address from 192.168.86.155
-        // let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
 
         match socket.connect((remote_host, 4444)).await {
             Ok(_) => {}
