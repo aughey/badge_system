@@ -178,7 +178,9 @@ pub async fn main_net(
     badge_text("starting main loop", true);
 
     loop {
+        badge_text("creating socket", true);
         let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
+        badge_text("created socket", true);
 
         socket.set_timeout(Some(Duration::from_secs(20)));
 
