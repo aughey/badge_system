@@ -110,7 +110,6 @@ fn Badge() -> impl IntoView {
         });
     }
 
-    const TEXT_LIMIT: usize = 13 * 5;
     let update_display = move |text: &str| {
         //        let text = text.get();
         // strip any non-ascii characters
@@ -189,6 +188,9 @@ async fn update_frequency(freq: u64) -> Result<String, ServerFnError> {
 async fn update_text(text: String) -> Result<String, ServerFnError> {
     use tracing::info;
     info!("Updating text to {text}");
+    // sort of input validation here so that all downstream actions are safe
+    let text = format_text_for_badge(text);
+    // truncate text
     crate::badge_channels::set_text(&text);
     Ok(format!("Updated text to {text}"))
 }
