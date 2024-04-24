@@ -22,12 +22,13 @@ RUN ls -al /work
 WORKDIR /work/web-badge
 RUN cargo leptos build --release -vv
 
+RUN ls -l /work/web-badge
+RUN ls -l /work
+
 FROM rustlang/rust:nightly-alpine as runner
 
 WORKDIR /app
 
-RUN ls -l /work/web-badge
-RUN ls -l /work
 
 COPY --from=builder /work/web-badge/target/release/leptos_start /app/
 COPY --from=builder /work/web-badge/target/site /app/site
