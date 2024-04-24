@@ -16,7 +16,7 @@ COPY web-badge .
 COPY badge_net .
 COPY badge_draw .
 
-RUN ls -al
+RUN ls -al /work
 
 WORKDIR /work/web-badge
 RUN cargo leptos build --release -vv
