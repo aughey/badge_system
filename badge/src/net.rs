@@ -200,8 +200,8 @@ pub async fn main_net(
         badge_text("Got DNS response", true);
 
         badge_text("creating socket", true);
-        static mut SOCKET_RX: [u8; 16384] = [0u8; 16384];
-        static mut SOCKET_TX: [u8; 16384] = [0u8; 16384];
+        static mut SOCKET_RX: [u8; 4096] = [0u8; 4096];
+        static mut SOCKET_TX: [u8; 4096] = [0u8; 4096];
         let rx_buffer = unsafe { &mut SOCKET_RX };
         let tx_buffer = unsafe { &mut SOCKET_TX };
         let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
