@@ -182,6 +182,7 @@ pub async fn main_net(
 
         const SERVER: &str = "dev.aughey.com";
         // Get address for dev.aughey.com through configured DNS
+        badge_text("Resolving DNS", true);
         let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
             Ok(addrs) => {
                 if let Some(addr) = addrs.first() {
@@ -198,6 +199,7 @@ pub async fn main_net(
                 continue;
             }
         };
+        badge_text("Got DNS response", true);
 
         // Get address from 192.168.86.155
         // let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
