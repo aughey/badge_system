@@ -339,6 +339,10 @@ async fn core1_task(
         led.set_high();
         Timer::after_millis(flash_rate).await;
 
+        if let Some(rate) = channel.try_take() {
+            flash_rate = rate.clamp(50, 2000);
+        }
+
         led.set_low();
         Timer::after_millis(flash_rate).await;
 

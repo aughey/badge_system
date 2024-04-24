@@ -125,24 +125,30 @@ pub async fn main_net(
     loop {
         const PHONE_WIFI_NETWORK: &str = include_str!("../wifi.network_phone.txt");
         const PHONE_WIFI_PASSWORD: &str = include_str!("../wifi.password_phone.txt");
+        badge_text(PHONE_WIFI_NETWORK, true);
         match control
             .join_wpa2(PHONE_WIFI_NETWORK, PHONE_WIFI_PASSWORD)
             .await
         {
-            Ok(_) => break,
+            Ok(_) => {
+                badge_text("connected to phone wifi", true);
+                break;
+            }
             Err(err) => {
                 info!("join failed with status={}", err.status);
             }
         }
-        //control.join_open(WIFI_NETWORK).await;
-        const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
-        const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
-        match control.join_wpa2(WIFI_NETWORK, WIFI_PASSWORD).await {
-            Ok(_) => break,
-            Err(err) => {
-                info!("join failed with status={}", err.status);
-            }
-        }
+        // const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
+        // const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
+        // match control.join_wpa2(WIFI_NETWORK, WIFI_PASSWORD).await {
+        //     Ok(_) => {
+        //         badge_text("Connected to home wifi", true);
+        //         break;
+        //     }
+        //     Err(err) => {
+        //         info!("join failed with status={}", err.status);
+        //     }
+        // }
     }
 
     // Wait for DHCP, not necessary when using static IP

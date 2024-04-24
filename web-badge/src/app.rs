@@ -77,8 +77,8 @@ fn Badge() -> impl IntoView {
             update_text(text.clone()).await.unwrap();
             update_frequency(freq).await.unwrap();
             set_messages.update(|m| {
-                m.insert(0, format!("Sent text to the server: {}", text));
-                m.insert(0, format!("Sent update rate to the server: {}", freq));
+                m.push(format!("Sent text to the server: {}", text));
+                m.push(format!("Sent update rate to the server: {}", freq));
             });
             ()
         });
