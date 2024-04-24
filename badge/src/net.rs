@@ -123,8 +123,8 @@ pub async fn main_net(
 
     //    status("Joining wpa2");
     loop {
-        const PHONE_WIFI_NETWORK: &str = include_str!("../phone_wifi.network.txt");
-        const PHONE_WIFI_PASSWORD: &str = include_str!("../phone_wifi.password.txt");
+        const PHONE_WIFI_NETWORK: &str = include_str!("../wifi.network_phone.txt");
+        const PHONE_WIFI_PASSWORD: &str = include_str!("../wifi.password_phone.txt");
         match control
             .join_wpa2(PHONE_WIFI_NETWORK, PHONE_WIFI_PASSWORD)
             .await
