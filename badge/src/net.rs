@@ -111,11 +111,11 @@ pub async fn main_net(
 
     // Init network stack
     static STACK: StaticCell<Stack<cyw43::NetDriver<'static>>> = StaticCell::new();
-    static RESOURCES: StaticCell<StackResources<2>> = StaticCell::new();
+    static RESOURCES: StaticCell<StackResources<4>> = StaticCell::new();
     let stack = &*STACK.init(Stack::new(
         net_device,
         config,
-        RESOURCES.init(StackResources::<2>::new()),
+        RESOURCES.init(StackResources::<4>::new()),
         seed,
     ));
 
@@ -125,6 +125,7 @@ pub async fn main_net(
     loop {
         const PHONE_WIFI_NETWORK: &str = include_str!("../wifi.network_phone.txt");
         const PHONE_WIFI_PASSWORD: &str = include_str!("../wifi.password_phone.txt");
+        log::info!("Trying to connect to phone wifi");
         badge_text(PHONE_WIFI_NETWORK, true);
         match control
             .join_wpa2(PHONE_WIFI_NETWORK, PHONE_WIFI_PASSWORD)
@@ -138,17 +139,18 @@ pub async fn main_net(
                 info!("join failed with status={}", err.status);
             }
         }
-        // const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
-        // const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
-        // match control.join_wpa2(WIFI_NETWORK, WIFI_PASSWORD).await {
-        //     Ok(_) => {
-        //         badge_text("Connected to home wifi", true);
-        //         break;
-        //     }
-        //     Err(err) => {
-        //         info!("join failed with status={}", err.status);
-        //     }
-        // }
+        log::info!("Trying to connect to home wifi");
+        const WIFI_NETWORK: &str = include_str!("../wifi.network.txt");
+        const WIFI_PASSWORD: &str = include_str!("../wifi.password.txt");
+        match control.join_wpa2(WIFI_NETWORK, WIFI_PASSWORD).await {
+            Ok(_) => {
+                badge_text("Connected to home wifi", true);
+                break;
+            }
+            Err(err) => {
+                info!("join failed with status={}", err.status);
+            }
+        }
     }
 
     // Wait for DHCP, not necessary when using static IP
@@ -183,43 +185,37 @@ pub async fn main_net(
     // And now we can use it!
 
     // badge_text("allocating connection buffers", true);
-    // let mut rx_buffer = alloc::vec::Vec::new();
-    // let mut tx_buffer = alloc::vec::Vec::new();
-    // rx_buffer.resize(4096, 0u8);
-    // tx_buffer.resize(4096, 0u8);
-    // badge_text("starting main loop", true);
+    let mut rx_buffer = alloc::vec::Vec::new();
+    let mut tx_buffer = alloc::vec::Vec::new();
+    rx_buffer.resize(4096, 0u8);
+    tx_buffer.resize(4096, 0u8);
+    //    badge_text("starting main loop", true);
 
     loop {
         const SERVER: &str = "dev.aughey.com";
         // Get address for dev.aughey.com through configured DNS
         // Get address from 192.168.86.155
         //let remote_host = embassy_net::Ipv4Address::new(192, 168, 86, 155);
-        let remote_host = embassy_net::Ipv4Address::new(13, 58, 3, 63);
-        // badge_text("Resolving DNS", true);
-        // use embassy_net::dns::DnsQueryType;
-        // let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
-        //     Ok(addrs) => {
-        //         if let Some(addr) = addrs.first() {
-        //             *addr
-        //         } else {
-        //             badge_text("DNS query failed", true);
-        //             Timer::after(Duration::from_secs(3)).await;
-        //             continue;
-        //         }
-        //     }
-        //     Err(e) => {
-        //         badge_text("DNS query failed", true);
-        //         Timer::after(Duration::from_secs(3)).await;
-        //         continue;
-        //     }
-        // };
-        // badge_text("Got DNS response", true);
+        //let remote_host = embassy_net::Ipv4Address::new(13, 58, 3, 63);
+        use embassy_net::dns::DnsQueryType;
+        let remote_host = match stack.dns_query(SERVER, DnsQueryType::A).await {
+            Ok(addrs) => {
+                if let Some(addr) = addrs.first() {
+                    *addr
+                } else {
+                    badge_text("DNS query failed", true);
+                    Timer::after(Duration::from_secs(3)).await;
+                    continue;
+                }
+            }
+            Err(e) => {
+                badge_text("DNS query failed", true);
+                Timer::after(Duration::from_secs(3)).await;
+                continue;
+            }
+        };
 
-        static mut SOCKET_RX: [u8; 4096] = [0u8; 4096];
-        static mut SOCKET_TX: [u8; 4096] = [0u8; 4096];
-        let rx_buffer = unsafe { &mut SOCKET_RX };
-        let tx_buffer = unsafe { &mut SOCKET_TX };
-        let mut socket = TcpSocket::new(stack, rx_buffer, tx_buffer);
+        let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
 
         socket.set_timeout(Some(Duration::from_secs(20)));
 
@@ -233,20 +229,20 @@ pub async fn main_net(
             }
         }
 
-        // let mut read_buffer = alloc::vec::Vec::new();
-        // let mut write_buffer = alloc::vec::Vec::new();
-        // read_buffer.resize(16384, 0u8);
-        // write_buffer.resize(16384, 0u8);
+        let mut read_buffer = alloc::vec::Vec::new();
+        let mut write_buffer = alloc::vec::Vec::new();
+        read_buffer.resize(16384, 0u8);
+        write_buffer.resize(16384, 0u8);
 
-        static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
-        static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        // static mut READ_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
+        // static mut WRITE_RECORD_BUFFER: [u8; 16384] = [0u8; 16384];
         let mut tls = TlsConnection::new(
             socket,
             //embedded_io_adapters::std::FromStd::new(client),
-            unsafe { &mut READ_RECORD_BUFFER },
-            unsafe { &mut WRITE_RECORD_BUFFER },
-            // &mut read_buffer,
-            // &mut write_buffer,
+            // unsafe { &mut READ_RECORD_BUFFER },
+            // unsafe { &mut WRITE_RECORD_BUFFER },
+            &mut read_buffer,
+            &mut write_buffer,
         );
 
         if let Err(_) = tls

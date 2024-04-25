@@ -45,7 +45,7 @@ embassy-net = { version = "0.4.0", features = [
     "dhcpv4",
     "tcp",
     "medium-ethernet",
-    #"dns",
+    "dns",
 ] }
 embedded-io-async = "0.6.1"
 format_no_std = "1.1.0"
@@ -57,6 +57,8 @@ nanorand = { version = "0.7.0", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 badge_net = { version = "0.1.0", path = "../badge_net" }
 badge_draw = { version = "0.1.0", path = "../badge_draw" }
+embassy-usb-logger = "0.1.0"
+log = "0.4.21"
 
 [profile.release]
 debug = 2

@@ -54,8 +54,12 @@ use embedded_text::{
 
 use embassy_executor::Executor;
 use embassy_rp::multicore::{spawn_core1, Stack};
+use embassy_rp::usb::{Driver, InterruptHandler};
 use static_cell::StaticCell;
 
+use embassy_rp::bind_interrupts;
+
+use embassy_rp::peripherals::USB;
 use tinybmp::Bmp;
 
 static FERRIS_IMG: &[u8; 2622] = include_bytes!("../ferris_1bpp.bmp");
@@ -71,11 +75,20 @@ enum LedState {
     Off,
 }
 
+bind_interrupts!(struct Irqs {
+    USBCTRL_IRQ => InterruptHandler<USB>;
+});
+
+#[embassy_executor::task]
+async fn logger_task(driver: Driver<'static, USB>) {
+    embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
+}
+
 use embedded_alloc::Heap;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
-const HEAP_SIZE: usize = 32768;
+const HEAP_SIZE: usize = 65536 * 2;
 static mut HEAP_MEM: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 #[embassy_executor::main]
@@ -83,6 +96,9 @@ async fn main(spawner: Spawner) {
     let p: embassy_rp::Peripherals = embassy_rp::init(Default::default());
     // Initialize the allocator BEFORE you use it
     unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+
+    let driver = Driver::new(p.USB, Irqs);
+    spawner.spawn(logger_task(driver)).unwrap();
 
     // // Grab our singleton objects
     // let mut pac = pac::Peripherals::take().unwrap();
@@ -263,7 +279,6 @@ async fn main(spawner: Spawner) {
             let executor1 = EXECUTOR1.init(Executor::new());
             executor1.run(|spawner| {
                 unwrap!(spawner.spawn(core1_task(led, &LED_RATE_CHANNEL)));
-                unwrap!(spawner.spawn(text_sender()));
             });
         },
     );
@@ -349,15 +364,5 @@ async fn core1_task(
         if let Some(rate) = channel.try_take() {
             flash_rate = rate.clamp(50, 2000);
         }
-    }
-}
-
-#[embassy_executor::task]
-async fn text_sender() {
-    loop {
-        _ = CHANNEL.try_send("Hello from\ncore 0");
-        Timer::after_millis(5000).await;
-        _ = CHANNEL.try_send("Hello again\ncore 0");
-        Timer::after_millis(5000).await;
     }
 }
