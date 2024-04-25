@@ -3,7 +3,6 @@ use std::{cell::RefCell, rc::Rc};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use web_sys::console::log;
 
 use crate::format_text_for_badge;
 
@@ -35,56 +34,32 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    // create_effect(move |_| {
-    //     let value = value().parse().unwrap();
-    //     spawn_local(async move {
-    //         update_frequency(value).await.unwrap();
-    //         ()
-    //     });
-    // });
-
     view! {
         <Badge/>
     }
 }
 
 #[component]
-fn Badge() -> impl IntoView {
+fn Flash(rate: ReadSignal<u64>) -> impl IntoView {
+    let (onoff, set_onoff) = create_signal(true);
+
+    create_effect(move |_| {
+        gloo_timers::callback::Interval::new(rate().try_into().unwrap(), move || {
+            set_onoff.update(|v| *v = !*v);
+        })
+    });
+
+    view! {
+        <div inner_html={move || if onoff() { "o" } else { "&nbsp;" }}></div>
+    }
+}
+
+#[component]
+fn Screen(text: ReadSignal<String>) -> impl IntoView {
     let screen_container = create_node_ref::<leptos::html::Div>();
-
-    let options = [50, 100, 250, 500, 1000];
-    let selected = 1000;
-    let (value, set_value) = create_signal(selected.to_string());
-    let (messages, set_messages) = create_signal(Vec::new());
-
     let display = Rc::new(RefCell::new(None));
 
-    let input_ref = create_node_ref::<leptos::html::Textarea>();
-    let get_input = {
-        let input_ref = input_ref.clone();
-        move || {
-            input_ref
-                .get()
-                .map(|v| v.value())
-                .unwrap_or_else(|| "".to_string())
-        }
-    };
-
-    let send_text = move || {
-        let text = get_input();
-        let freq = value().parse().unwrap();
-        spawn_local(async move {
-            update_text(text.clone()).await.unwrap();
-            update_frequency(freq).await.unwrap();
-            set_messages.update(|m| {
-                m.push(format!("Sent text to the server: {}", text));
-                m.push(format!("Sent update rate to the server: {}", freq));
-            });
-            ()
-        });
-    };
-
-    const INITIAL_TEXT: &str = "Enter Text Here";
+    // Effect to construct the display
     {
         let display = display.clone();
         create_effect(move |_| {
@@ -102,46 +77,95 @@ fn Badge() -> impl IntoView {
             let mut text_display =
                 WebSimulatorDisplay::new((WIDTH, HEIGHT), &output_settings, Some(&sc));
 
-            badge_draw::draw_display(&mut text_display, INITIAL_TEXT)
-                .expect("could not draw display");
+            badge_draw::draw_display(&mut text_display, "INIT").expect("could not draw display");
             text_display.flush().expect("could not flush buffer");
 
             display.replace(Some(text_display));
         });
     }
 
-    let update_display = move |text: &str| {
-        //        let text = text.get();
-        // strip any non-ascii characters
-        if let Some(display) = display.borrow_mut().as_mut() {
-            let text = format_text_for_badge(text);
-            badge_draw::draw_display(display, text.as_str()).expect("could not draw text");
-            display.flush().expect("could not flush buffer");
+    create_effect(move |_| {
+        let text = text.get();
+        let text = format_text_for_badge(text);
+        if let Some(text_display) = display.borrow_mut().as_mut() {
+            badge_draw::draw_display(text_display, &text).expect("could not draw display");
+            text_display.flush().expect("could not flush buffer");
+        }
+    });
+
+    view! {
+        <div _ref=screen_container id="custom-container" class="badge">
+        </div>
+    }
+}
+
+#[component]
+fn Badge() -> impl IntoView {
+    let options = [50, 100, 250, 500, 1000];
+    let (value, set_value) = create_signal(1000u64);
+    let (messages, set_messages) = create_signal(Vec::new());
+    let (badge_text, set_badge_text) = create_signal("Enter Text Here".to_string());
+
+    // Text areas are finicky so we need to use a ref to get the value
+    // and this get_input helper function to extract the value.
+    let input_ref = create_node_ref::<leptos::html::Textarea>();
+    let get_input = {
+        let input_ref = input_ref.clone();
+        move || {
+            input_ref
+                .get()
+                .map(|v| v.value())
+                .unwrap_or_else(|| "".to_string())
         }
     };
+
+    // Fn to send the text to the badge
+    let send_text_to_badge = move || {
+        let text = badge_text();
+        let freq = value();
+        spawn_local(async move {
+            update_text(text.clone()).await.unwrap();
+            update_frequency(freq).await.unwrap();
+            set_messages.update(|m| {
+                m.push(format!("Sent text to the server: {}", text));
+                m.push(format!("Sent update rate to the server: {}", freq));
+            });
+            ()
+        });
+    };
+
+    // Convert options into the view
+    let options = options
+        .into_iter()
+        .map(|v| {
+            view! {
+                <option selected=move|| if v == value() { "selected" } else { "" }>
+                    {v}
+                </option>
+            }
+        })
+        .collect_view();
 
     view! {
         <div>
         <h1>"Badge"</h1>
-        <div _ref=screen_container id="custom-container" class="badge">
-        </div>
+        <Screen text=badge_text/>
+        <Flash rate=value/>
         <textarea _ref=input_ref
-        on:input=move |_| update_display(get_input().as_str())>
-        {INITIAL_TEXT}
+        on:input=move |_| {
+            set_badge_text(get_input().to_string());
+        }>
+        {badge_text.get_untracked()}
         </textarea>
         <div>LED Flash Rate (ms)
          <select on:change=move |ev| {
-        let new_value = event_target_value(&ev);
+        let new_value = event_target_value(&ev).parse().unwrap();
         set_value(new_value);
     }>
-        {move || options.into_iter().map(|v| v.to_string()).map(|v| view! {
-            <option selected=if v == value() { "selected" } else { "" }>
-                {v}
-            </option>
-        }).collect_view()}
+        {options}
     </select>
     </div>
-        <button on:click=move |_| send_text()>Send this state to Badge</button>
+        <button on:click=move |_| send_text_to_badge()>Send this state to Badge</button>
         <div>
         Only the most recent message is displayed on the badge.
         </div>

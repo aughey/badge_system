@@ -1,4 +1,3 @@
-use std::cell::Cell;
 use std::sync::Mutex;
 
 static UPDATE_FREQ: Mutex<Option<u64>> = Mutex::new(None);

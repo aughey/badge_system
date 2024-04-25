@@ -10,7 +10,6 @@ use std::env;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
-    use std::{fs::File, io::BufReader};
 
     use actix_files::Files;
     use actix_web::*;

@@ -2,15 +2,12 @@ use anyhow::Result;
 // use rustls::crypto::{aws_lc_rs as provider, CryptoProvider};
 // use rustls::server::WebPkiClientVerifier;
 // use rustls::RootCertStore;
-use std::fs::File;
-use std::io::BufReader;
-use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tracing::{error, info};
 
 pub async fn server(
-    args: impl IntoIterator<Item = String>,
+    _args: impl IntoIterator<Item = String>,
     get_frequency: impl Fn() -> Option<u64> + Send + 'static + Clone,
     get_text: impl Fn() -> Option<String> + Send + 'static + Clone,
 ) -> Result<()> {
