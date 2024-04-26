@@ -3,7 +3,7 @@ use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 
 /// Define HTTP actor
-pub struct MyWs;
+pub struct MyWs {}
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
@@ -28,5 +28,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
 }
 
 pub async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    ws::start(MyWs, &req, stream)
+    // initiate a connection to our own tcp, this will forward websocket traffic to our badge handler
+    // let socket = tokio::net::TcpStream::connect("127.0.0.1:4443").await?;
+    // let (reader, writer) = tokio::io::split(socket);
+    ws::start(MyWs {}, &req, stream)
 }

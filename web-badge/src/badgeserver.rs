@@ -8,7 +8,7 @@ use tracing::{error, info};
 
 pub async fn server(
     _args: impl IntoIterator<Item = String>,
-    get_frequency: impl Fn() -> Option<u64> + Send + 'static + Clone,
+    get_frequency: impl Fn() -> Option<u32> + Send + 'static + Clone,
     get_text: impl Fn() -> Option<String> + Send + 'static + Clone,
 ) -> Result<()> {
     // let mut args = args.into_iter();
@@ -136,7 +136,7 @@ where
 
 async fn handle_connection<C>(
     mut stream: C,
-    get_rate: impl Fn() -> Option<u64>,
+    get_rate: impl Fn() -> Option<u32>,
     get_text: impl Fn() -> Option<String>,
 ) -> Result<()>
 where

@@ -40,7 +40,7 @@ fn HomePage() -> impl IntoView {
 }
 
 #[component]
-fn Flash(rate: ReadSignal<u64>) -> impl IntoView {
+fn Flash(rate: ReadSignal<u32>) -> impl IntoView {
     let (onoff, set_onoff) = create_signal(true);
 
     create_effect(move |_| {
@@ -102,7 +102,7 @@ fn Screen(text: ReadSignal<String>) -> impl IntoView {
 #[component]
 fn Badge() -> impl IntoView {
     let options = [50, 100, 250, 500, 1000];
-    let (value, set_value) = create_signal(1000u64);
+    let (value, set_value) = create_signal(1000u32);
     let (messages, set_messages) = create_signal(Vec::new());
     let (badge_text, set_badge_text) = create_signal("Enter Text Here".to_string());
 
@@ -201,7 +201,7 @@ fn NotFound() -> impl IntoView {
 }
 
 #[server(UpdateFreq, "/updatefreq")]
-async fn update_frequency(freq: u64) -> Result<String, ServerFnError> {
+async fn update_frequency(freq: u32) -> Result<String, ServerFnError> {
     use tracing::info;
     info!("Updating frequency to {freq}");
     crate::badge_channels::set_frequency(freq);

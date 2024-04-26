@@ -1,13 +1,13 @@
 use std::sync::Mutex;
 
-static UPDATE_FREQ: Mutex<Option<u64>> = Mutex::new(None);
+static UPDATE_FREQ: Mutex<Option<u32>> = Mutex::new(None);
 static TEXT: Mutex<Option<String>> = Mutex::new(None);
 
-pub fn set_frequency(freq: u64) {
+pub fn set_frequency(freq: u32) {
     UPDATE_FREQ.lock().unwrap().replace(freq);
 }
 
-pub fn get_frequency() -> Option<u64> {
+pub fn get_frequency() -> Option<u32> {
     UPDATE_FREQ.lock().unwrap().clone()
 }
 
