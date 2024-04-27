@@ -154,7 +154,7 @@ docker push aughey/webbadge:latest
 
 docker run -p 3000:3000 --rm -it aughey/webbadge:latest
 sudo rm -rf /tmp/keys ; mkdir /tmp/keys && sudo cp -r -L /home/ec2-user/letsencrypt/etc/live/dev.aughey.com/. /tmp/keys/.
-
+docker compose up --remove-orphans
 ```
 
 https://docs.pingidentity.com/r/en-us/solution-guides/htg_use_openssl_to_test_ssl_connectivity
