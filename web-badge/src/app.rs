@@ -19,6 +19,8 @@ pub fn App() -> impl IntoView {
         // sets the document title
         <Title text="Aughey Badge"/>
 
+        <Meta content="width=device-width, initial-scale=1" />
+
         // content for this welcome page
         <Router>
             <main>
